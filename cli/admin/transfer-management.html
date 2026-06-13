@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transfer Management - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a',
+                    },
+                    keyframes: {
+                        shimmer: {
+                            '0%': { backgroundPosition: '-1000px 0' },
+                            '100%': { backgroundPosition: '1000px 0' }
+                        }
+                    },
+                    animation: {
+                        shimmer: 'shimmer 2s infinite linear'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Added shimmer skeleton loader styles -->
+    <style>
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+        }
+        .dark .skeleton {
+            background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+            background-size: 1000px 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+     
+    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <h1 class="text-2xl font-bold text-primary dark:text-blue-400">SecureBank Admin</h1>
+                    <div class="hidden md:flex space-x-1">
+                        <a href="admin-dashboard.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Dashboard</a>
+                        <a href="user-management.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Users</a>
+                        <a href="transfer-management.html" class="px-4 py-2 text-white bg-primary dark:bg-blue-600 rounded-lg font-medium transition-colors">Transfers</a>
+                        <a href="atm-management.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">ATM</a>
+                        <a href="simulate-transactions.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Simulate</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                        <svg id="sunIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        <svg id="moonIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white" id="adminName">Admin User</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
+                    </div>
+                    <button id="mobileMenuBtn" class="md:hidden p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                    <button id="logoutBtn" class="hidden sm:block px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobileMenu" class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <div class="px-4 py-3 space-y-2">
+                <a href="admin-dashboard.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Dashboard</a>
+                <a href="user-management.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Users</a>
+                <a href="transfer-management.html" class="block px-4 py-2 text-white bg-primary dark:bg-blue-600 rounded-lg">Transfers</a>
+                <a href="atm-management.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">ATM</a>
+                <a href="simulate-transactions.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Simulate</a>
+                <button id="mobileLogoutBtn" class="w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    
+    <div id="toastContainer" class="fixed top-20 right-4 z-50 space-y-2"></div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Security Code Requirements section -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Security Code Requirements</h2>
+            
+            <div class="space-y-6">
+                <!-- Toggle All Codes -->
+                <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Require All Security Codes</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Enable or disable all security codes at once</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleAllCodes" class="sr-only peer" onchange="toggleAllSecurityCodes()">
+                        <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+
+                <!-- Individual Code Toggles -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- IMF Code -->
+                    <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div>
+                            <h4 class="font-semibold text-gray-900 dark:text-white">IMF Code</h4>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">International Monetary Fund</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="requireImf" class="sr-only peer" onchange="toggleIndividualCode('imf')">
+                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- COT Code -->
+                    <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div>
+                            <h4 class="font-semibold text-gray-900 dark:text-white">COT Code</h4>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Cost of Transfer</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="requireCot" class="sr-only peer" onchange="toggleIndividualCode('cot')">
+                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- TAX Code -->
+                    <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div>
+                            <h4 class="font-semibold text-gray-900 dark:text-white">TAX Code</h4>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Tax Clearance</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="requireTax" class="sr-only peer" onchange="toggleIndividualCode('tax')">
+                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Transfer Fee Management</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Local Transfer Fee</h3>
+                    <!-- Added current fee display -->
+                    <div class="mb-3">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Current Fee: <span id="currentLocalFee" class="font-semibold text-blue-600 dark:text-blue-400">Loading...</span></p>
+                    </div>
+                    <div class="flex items-end space-x-4">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Fee Amount ($)</label>
+                            <input type="number" id="localFee" step="0.01" min="0" placeholder="0.00" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <button onclick="setTransferFee('local')" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                            Set Fee
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Wire Transfer Fee</h3>
+                    <!-- Added current fee display -->
+                    <div class="mb-3">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Current Fee: <span id="currentWireFee" class="font-semibold text-blue-600 dark:text-blue-400">Loading...</span></p>
+                    </div>
+                    <div class="flex items-end space-x-4">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Fee Amount ($)</label>
+                            <input type="number" id="wireFee" step="0.01" min="0" placeholder="0.00" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <button onclick="setTransferFee('wire')" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                            Set Fee
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">All Transfers</h2>
+                
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+                    <select id="statusFilter" class="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Status</option>
+                        <option value="processing">Processing</option>
+                        <option value="completed">Completed</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                    
+                    <select id="typeFilter" class="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Types</option>
+                        <option value="local">Local</option>
+                        <option value="wire">Wire</option>
+                    </select>
+                    
+                    <!-- Added age filter for new/old transfers -->
+                    <select id="ageFilter" class="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Transfers</option>
+                        <option value="new">New (24h)</option>
+                        <option value="old">Older</option>
+                    </select>
+                    
+                    <button onclick="loadTransfers()" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">User</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Bank</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fee</th>
+                            <!-- Added Age column -->
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Age</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transfersTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <!-- Added skeleton loader rows -->
+                        <tr class="skeleton-row">
+                            <td colspan="10" class="px-4 py-3">
+                                <div class="skeleton h-6 rounded"></div>
+                            </td>
+                        </tr>
+                        <tr class="skeleton-row">
+                            <td colspan="10" class="px-4 py-3">
+                                <div class="skeleton h-6 rounded"></div>
+                            </td>
+                        </tr>
+                        <tr class="skeleton-row">
+                            <td colspan="10" class="px-4 py-3">
+                                <div class="skeleton h-6 rounded"></div>
+                            </td>
+                        </tr>
+                        <tr class="skeleton-row">
+                            <td colspan="10" class="px-4 py-3">
+                                <div class="skeleton h-6 rounded"></div>
+                            </td>
+                        </tr>
+                        <tr class="skeleton-row">
+                            <td colspan="10" class="px-4 py-3">
+                                <div class="skeleton h-6 rounded"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Added pagination controls -->
+            <div class="flex flex-col sm:flex-row justify-between items-center mt-6 space-y-4 sm:space-y-0">
+                <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalTransfers">0</span> transfers
+                </div>
+                <div class="flex space-x-2">
+                    <button id="prevBtn" onclick="changePage(-1)" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        Previous
+                    </button>
+                    <div id="pageNumbers" class="flex space-x-2"></div>
+                    <button id="nextBtn" onclick="changePage(1)" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+    <div id="statusModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Update Transfer Status</h3>
+            
+            <div class="mb-4">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Transfer ID: <span id="modalTransferId" class="font-semibold"></span></p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Current Status: <span id="modalCurrentStatus" class="font-semibold"></span></p>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">New Status</label>
+                <select id="newStatus" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="processing">Processing</option>
+                    <option value="completed">Completed</option>
+                    <option value="failed">Failed</option>
+                </select>
+            </div>
+
+            <div class="flex space-x-4">
+                <button onclick="closeStatusModal()" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    Cancel
+                </button>
+                <button onclick="updateTransferStatus()" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                    Update Status
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.getApiBaseUrl("admin");
+        let currentTransferId = null;
+        let currentPage = 1;
+        let itemsPerPage = 10;
+        let allTransfers = [];
+        let filteredTransfers = [];
+        
+        function initTheme() {
+            const theme = localStorage.getItem('adminTheme') || 'dark';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.getElementById('sunIcon').classList.remove('hidden');
+                document.getElementById('moonIcon').classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('sunIcon').classList.add('hidden');
+                document.getElementById('moonIcon').classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const isDark = document.documentElement.classList.contains('dark');
+            if (isDark) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('adminTheme', 'light');
+                document.getElementById('sunIcon').classList.add('hidden');
+                document.getElementById('moonIcon').classList.remove('hidden');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('adminTheme', 'dark');
+                document.getElementById('sunIcon').classList.remove('hidden');
+                document.getElementById('moonIcon').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        });
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500',
+                warning: 'bg-yellow-500'
+            };
+            
+            toast.className = `${colors[type]} text-white px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-0 opacity-100 max-w-md`;
+            toast.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateX(400px)';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../auth/login.html';
+                return false;
+            }
+            return true;
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '../auth/login.html';
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('mobileLogoutBtn').addEventListener('click', logout);
+
+        async function setTransferFee(type) {
+            const feeInput = document.getElementById(`${type}Fee`);
+            const feeAmount = parseFloat(feeInput.value);
+
+            if (isNaN(feeAmount) || feeAmount < 0) {
+                showToast('Please enter a valid fee amount', 'error');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.post(
+                    `${API_BASE_URL}/set-transfer-fee`,
+                    { type, fee_amount: feeAmount },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                showToast(response.data.message, 'success');
+                feeInput.value = '';
+                loadTransferFees();
+            } catch (error) {
+                showToast(error.response?.data?.error || 'Failed to set transfer fee', 'error');
+            }
+        }
+
+        function formatNumber(num) {
+            if (num === null || num === undefined) return '0.00';
+            return parseFloat(num).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function isNewTransfer(dateString) {
+            const transferDate = new Date(dateString);
+            const now = new Date();
+            const hoursDiff = (now - transferDate) / (1000 * 60 * 60);
+            return hoursDiff <= 24;
+        }
+
+        async function loadTransfers() {
+            showSkeletonLoaders();
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get(`${API_BASE_URL}/all-transfers`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                allTransfers = response.data.transfers.sort((a, b) => {
+                    return new Date(b.date) - new Date(a.date);
+                });
+                
+                applyFilters();
+            } catch (error) {
+                hideSkeletonLoaders();
+                showToast(error.response?.data?.error || 'Failed to load transfers', 'error');
+            }
+        }
+
+        function showSkeletonLoaders() {
+            const tbody = document.getElementById('transfersTableBody');
+            tbody.innerHTML = `
+                ${Array(5).fill('').map(() => `
+                    <tr class="skeleton-row">
+                        <td colspan="10" class="px-4 py-3">
+                            <div class="skeleton h-6 rounded"></div>
+                        </td>
+                    </tr>
+                `).join('')}
+            `;
+        }
+
+        function hideSkeletonLoaders() {
+            const skeletonRows = document.querySelectorAll('.skeleton-row');
+            skeletonRows.forEach(row => row.remove());
+        }
+
+        function applyFilters() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            const ageFilter = document.getElementById('ageFilter').value;
+
+            filteredTransfers = allTransfers.filter(t => {
+                const statusMatch = !statusFilter || t.status === statusFilter;
+                const typeMatch = !typeFilter || t.type === typeFilter;
+                
+                let ageMatch = true;
+                if (ageFilter === 'new') {
+                    ageMatch = isNewTransfer(t.date);
+                } else if (ageFilter === 'old') {
+                    ageMatch = !isNewTransfer(t.date);
+                }
+                
+                return statusMatch && typeMatch && ageMatch;
+            });
+
+            currentPage = 1;
+            displayTransfers();
+        }
+
+        function displayTransfers() {
+            hideSkeletonLoaders();
+            const tbody = document.getElementById('transfersTableBody');
+            
+            if (filteredTransfers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                            No transfers found
+                        </td>
+                    </tr>
+                `;
+                updatePaginationInfo(0, 0, 0);
+                return;
+            }
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredTransfers.length);
+            const pageTransfers = filteredTransfers.slice(startIndex, endIndex);
+
+            tbody.innerHTML = pageTransfers.map(t => {
+                const statusColors = {
+                    processing: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+                    completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+                    failed: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                };
+
+                const isNew = isNewTransfer(t.date);
+                const ageLabel = isNew ? 'NEW' : 'OLD';
+                const ageBadgeColor = isNew ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+
+                const formattedAmount = formatNumber(t.amount.replace('$', ''));
+                const formattedFee = formatNumber(t.fee.replace('$', ''));
+
+                return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">${t.id}</td>
+                        <td class="px-4 py-3 text-sm">
+                            <div class="text-gray-900 dark:text-white font-medium">${t.full_name}</div>
+                            <div class="text-gray-500 dark:text-gray-400 text-xs">${t.email}</div>
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${t.type === 'wire' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'}">
+                                ${t.type.toUpperCase()}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            <div class="text-gray-900 dark:text-white">${t.bank_name}</div>
+                            ${t.bank_country ? `<div class="text-gray-500 dark:text-gray-400 text-xs">${t.bank_country}</div>` : ''}
+                        </td>
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white">$${formattedAmount}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">$${formattedFee}</td>
+                        <td class="px-4 py-3 text-sm">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${ageBadgeColor}">
+                                ${ageLabel}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusColors[t.status]}">
+                                ${t.status.toUpperCase()}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">${t.date}</td>
+                        <td class="px-4 py-3 text-sm">
+                            <button onclick="openStatusModal(${t.id}, '${t.status}')" class="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors">
+                                Update
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            updatePaginationInfo(startIndex + 1, endIndex, filteredTransfers.length);
+            updatePaginationButtons();
+        }
+
+        function updatePaginationInfo(start, end, total) {
+            document.getElementById('showingStart').textContent = start;
+            document.getElementById('showingEnd').textContent = end;
+            document.getElementById('totalTransfers').textContent = total;
+        }
+
+        function updatePaginationButtons() {
+            const totalPages = Math.ceil(filteredTransfers.length / itemsPerPage);
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const pageNumbers = document.getElementById('pageNumbers');
+
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+
+            // Generate page numbers
+            let pagesHTML = '';
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+            if (endPage - startPage < maxVisiblePages - 1) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                pagesHTML += `
+                    <button 
+                        onclick="goToPage(${i})" 
+                        class="px-4 py-2 border ${i === currentPage ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'} rounded-lg transition-colors"
+                    >
+                        ${i}
+                    </button>
+                `;
+            }
+
+            pageNumbers.innerHTML = pagesHTML;
+        }
+
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredTransfers.length / itemsPerPage);
+            const newPage = currentPage + direction;
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                displayTransfers();
+            }
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            displayTransfers();
+        }
+
+        function openStatusModal(transferId, currentStatus) {
+            currentTransferId = transferId;
+            document.getElementById('modalTransferId').textContent = transferId;
+            document.getElementById('modalCurrentStatus').textContent = currentStatus.toUpperCase();
+            document.getElementById('newStatus').value = currentStatus;
+            document.getElementById('statusModal').classList.remove('hidden');
+        }
+
+        function closeStatusModal() {
+            document.getElementById('statusModal').classList.add('hidden');
+            currentTransferId = null;
+        }
+
+        async function updateTransferStatus() {
+            const newStatus = document.getElementById('newStatus').value;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.put(
+                    `${API_BASE_URL}/update-transfer-status/${currentTransferId}`,
+                    { status: newStatus },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                showToast(response.data.message, 'success');
+                closeStatusModal();
+                loadTransfers();
+            } catch (error) {
+                showToast(error.response?.data?.error || 'Failed to update transfer status', 'error');
+            }
+        }
+
+        document.getElementById('statusFilter').addEventListener('change', applyFilters);
+        document.getElementById('typeFilter').addEventListener('change', applyFilters);
+        document.getElementById('ageFilter').addEventListener('change', applyFilters);
+
+        async function loadTransferFees() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get(`${API_BASE_URL}/transfer-fee`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                const fees = response.data.fees;
+                
+                if (fees.local !== undefined) {
+                    document.getElementById('currentLocalFee').textContent = `$${fees.local.toFixed(2)}`;
+                    document.getElementById('localFee').placeholder = fees.local.toFixed(2);
+                } else {
+                    document.getElementById('currentLocalFee').textContent = 'Not set';
+                }
+
+                if (fees.wire !== undefined) {
+                    document.getElementById('currentWireFee').textContent = `$${fees.wire.toFixed(2)}`;
+                    document.getElementById('wireFee').placeholder = fees.wire.toFixed(2);
+                } else {
+                    document.getElementById('currentWireFee').textContent = 'Not set';
+                }
+            } catch (error) {
+                document.getElementById('currentLocalFee').textContent = 'Error loading';
+                document.getElementById('currentWireFee').textContent = 'Error loading';
+                console.error('Failed to load transfer fees:', error);
+            }
+        }
+
+        // Security code settings functions
+        async function loadSecurityCodeSettings() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get(`${API_BASE_URL}/security-codes/settings`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                const settings = response.data.settings;
+                
+                // Update individual toggles
+                document.getElementById('requireImf').checked = settings.require_imf;
+                document.getElementById('requireCot').checked = settings.require_cot;
+                document.getElementById('requireTax').checked = settings.require_tax;
+                
+                // Update "toggle all" based on whether all are enabled
+                const allEnabled = settings.require_imf && settings.require_cot && settings.require_tax;
+                document.getElementById('toggleAllCodes').checked = allEnabled;
+            } catch (error) {
+                showToast('Failed to load security code settings', 'error');
+                console.error('Failed to load security code settings:', error);
+            }
+        }
+
+        async function toggleAllSecurityCodes() {
+            const toggleAll = document.getElementById('toggleAllCodes').checked;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.post(
+                    `${API_BASE_URL}/security-codes/settings`,
+                    { require_codes: toggleAll },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                showToast(`All security codes ${toggleAll ? 'enabled' : 'disabled'}`, 'success');
+                
+                // Update individual toggles to match
+                document.getElementById('requireImf').checked = toggleAll;
+                document.getElementById('requireCot').checked = toggleAll;
+                document.getElementById('requireTax').checked = toggleAll;
+            } catch (error) {
+                showToast(error.response?.data?.error || 'Failed to update security codes', 'error');
+                // Revert toggle on error
+                document.getElementById('toggleAllCodes').checked = !toggleAll;
+            }
+        }
+
+        async function toggleIndividualCode(codeType) {
+            const checkbox = document.getElementById(`require${codeType.charAt(0).toUpperCase() + codeType.slice(1)}`);
+            const isEnabled = checkbox.checked;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const payload = {};
+                payload[`require_${codeType}`] = isEnabled;
+                
+                const response = await axios.post(
+                    `${API_BASE_URL}/security-codes/settings`,
+                    payload,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                showToast(`${codeType.toUpperCase()} code ${isEnabled ? 'enabled' : 'disabled'}`, 'success');
+                
+                // Update "toggle all" based on current state
+                const imf = document.getElementById('requireImf').checked;
+                const cot = document.getElementById('requireCot').checked;
+                const tax = document.getElementById('requireTax').checked;
+                document.getElementById('toggleAllCodes').checked = imf && cot && tax;
+            } catch (error) {
+                showToast(error.response?.data?.error || `Failed to update ${codeType.toUpperCase()} code`, 'error');
+                // Revert checkbox on error
+                checkbox.checked = !isEnabled;
+            }
+        }
+
+        if (checkAuth()) {
+            initTheme();
+            loadSecurityCodeSettings();
+            loadTransferFees();
+            loadTransfers();
+        }
+    </script>
+</body>
+</html>

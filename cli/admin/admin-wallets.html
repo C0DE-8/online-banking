@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Management - SecureBank Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a',
+                        secondary: '#3b82f6',
+                        accent: '#60a5fa',
+                        dark: '#0f172a',
+                        light: '#f8fafc',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+
+
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+
+    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <h1 class="text-xl sm:text-2xl font-bold text-primary dark:text-blue-400">SecureBank Admin</h1>
+                    <div class="hidden md:flex space-x-1">
+                        <a href="admin-dashboard.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Dashboard</a>
+                        <a href="admin-wallets.html" class="px-4 py-2 text-white bg-primary dark:bg-blue-600 rounded-lg font-medium transition-colors">Wallets</a>
+                        <a href="admin-tickets.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Tickets</a>
+                        <a href="admin-deposits.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Deposits</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <button id="themeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <svg id="sunIcon" class="w-5 h-5 text-gray-700 dark:text-gray-300 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        <svg id="moonIcon" class="w-5 h-5 text-gray-700 dark:text-gray-300 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                    <button id="logoutButton" class="hidden sm:block px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors text-sm">
+                        Logout
+                    </button>
+                     <!-- Added mobile menu button -->
+                    <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+         <!-- Added mobile menu dropdown -->
+        <div id="mobileMenu" class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <div class="px-4 py-3 space-y-2">
+                <a href="admin-dashboard.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Dashboard</a>
+                <a href="admin-wallets.html" class="block px-4 py-2 text-white bg-primary dark:bg-blue-600 rounded-lg font-medium">Wallets</a>
+                <a href="admin-tickets.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Tickets</a>
+                <a href="admin-deposits.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Deposits</a>
+                <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <button id="logoutButtonMobile" class="w-full px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors text-sm">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+ 
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Wallet Management</h2>
+            <p class="text-gray-600 dark:text-gray-400">Manage deposit wallets and QR codes</p>
+        </div>
+
+ 
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Add New Wallet</h3>
+            <form id="addWalletForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Wallet Name</label>
+                        <input type="text" id="walletName" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Bitcoin Wallet">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Wallet Address</label>
+                        <input type="text" id="walletAddress" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter wallet address">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">QR Code Image</label>
+                    <input type="file" id="qrcodeFile" accept="image/*" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <button type="submit" id="addWalletBtn" class="w-full md:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                    <span>Add Wallet</span>
+                    <svg class="w-5 h-5 hidden animate-spin" id="addWalletSpinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </form>
+        </div>
+
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">All Wallets</h3>
+            </div>
+            <div id="walletsContainer" class="p-6">
+                <div class="flex justify-center py-8">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+
+    <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Edit Wallet</h3>
+                <button onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="editWalletForm" class="p-6 space-y-4">
+                <input type="hidden" id="editWalletId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Wallet Name</label>
+                    <input type="text" id="editWalletName" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Wallet Address</label>
+                    <input type="text" id="editWalletAddress" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">QR Code Image (optional - leave empty to keep current)</label>
+                    <input type="file" id="editQrcodeFile" accept="image/*" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" id="updateWalletBtn" class="flex-1 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                        <span>Update Wallet</span>
+                        <svg class="w-5 h-5 hidden animate-spin" id="updateWalletSpinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                    <button type="button" onclick="closeEditModal()" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.getApiBaseUrl("admin");
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-0 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } text-white`;
+            toast.innerHTML = `
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    ${type === 'success' 
+                        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'
+                        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'
+                    }
+                </svg>
+                <span class="font-medium">${message}</span>
+            `;
+            document.getElementById('toastContainer').appendChild(toast);
+            setTimeout(() => {
+                toast.style.transform = 'translateX(400px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!token || (!user.role || user.role !== 'admin') && !user.is_admin) {
+                window.location.href = '../auth/login.html';
+                return false;
+            }
+            return true;
+        }
+
+        document.getElementById('logoutButton').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '../auth/login.html';
+        });
+
+        document.getElementById('logoutButtonMobile').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '../auth/login.html';
+        });
+
+        async function loadWallets() {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await axios.get(`${API_BASE_URL}/wallets`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                
+                const container = document.getElementById('walletsContainer');
+                if (response.data.wallets.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400 py-8">No wallets found. Add your first wallet above.</p>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${response.data.wallets.map(wallet => `
+                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-lg transition-shadow">
+                                <div class="flex justify-center mb-4">
+                                    <img src="${wallet.qrcode_url}" alt="QR Code" class="w-48 h-48 object-contain rounded-lg bg-white">
+                                </div>
+                                <h4 class="font-semibold text-lg text-gray-900 dark:text-gray-100 mb-2">${wallet.wallet_name}</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-1 break-all">${wallet.wallet_address}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mb-4">${new Date(wallet.created_at).toLocaleDateString()}</p>
+                                <div class="flex gap-2">
+                                    <button onclick="openEditModal(${wallet.id}, '${wallet.wallet_name}', '${wallet.wallet_address}')" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
+                                        Edit
+                                    </button>
+                                    <button onclick="deleteWallet(${wallet.id})" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading wallets:', error);
+                showToast('Failed to load wallets', 'error');
+            }
+        }
+
+        document.getElementById('addWalletForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = localStorage.getItem('token');
+            const btn = document.getElementById('addWalletBtn');
+            const spinner = document.getElementById('addWalletSpinner');
+            
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+
+            const formData = new FormData();
+            formData.append('wallet_name', document.getElementById('walletName').value);
+            formData.append('wallet_address', document.getElementById('walletAddress').value);
+            formData.append('qrcode', document.getElementById('qrcodeFile').files[0]);
+
+            try {
+                await axios.post(`${API_BASE_URL}/wallets`, formData, {
+                    headers: { 
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                showToast('Wallet added successfully!');
+                document.getElementById('addWalletForm').reset();
+                loadWallets();
+            } catch (error) {
+                console.error('Error adding wallet:', error);
+                showToast(error.response?.data?.error || 'Failed to add wallet', 'error');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        });
+
+        function openEditModal(id, name, address) {
+            document.getElementById('editWalletId').value = id;
+            document.getElementById('editWalletName').value = name;
+            document.getElementById('editWalletAddress').value = address;
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+            document.getElementById('editWalletForm').reset();
+        }
+
+        document.getElementById('editWalletForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = localStorage.getItem('token');
+            const btn = document.getElementById('updateWalletBtn');
+            const spinner = document.getElementById('updateWalletSpinner');
+            
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+
+            const walletId = document.getElementById('editWalletId').value;
+            const formData = new FormData();
+            formData.append('wallet_name', document.getElementById('editWalletName').value);
+            formData.append('wallet_address', document.getElementById('editWalletAddress').value);
+            
+            const qrcodeFile = document.getElementById('editQrcodeFile').files[0];
+            if (qrcodeFile) {
+                formData.append('qrcode', qrcodeFile);
+            }
+
+            try {
+                await axios.put(`${API_BASE_URL}/wallets/${walletId}`, formData, {
+                    headers: { 
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                showToast('Wallet updated successfully!');
+                closeEditModal();
+                loadWallets();
+            } catch (error) {
+                console.error('Error updating wallet:', error);
+                showToast(error.response?.data?.error || 'Failed to update wallet', 'error');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        });
+
+        async function deleteWallet(id) {
+            if (!confirm('Are you sure you want to delete this wallet? This action cannot be undone.')) {
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            try {
+                await axios.delete(`${API_BASE_URL}/wallets/${id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                showToast('Wallet deleted successfully!');
+                loadWallets();
+            } catch (error) {
+                console.error('Error deleting wallet:', error);
+                showToast(error.response?.data?.error || 'Failed to delete wallet', 'error');
+            }
+        }
+
+        if (checkAuth()) {
+            initTheme();
+            loadWallets();
+        }
+    </script>
+</body>
+</html>

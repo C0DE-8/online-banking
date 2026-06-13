@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <title>Finapp</title>
+    <meta name="description" content="Finapp HTML Mobile Template">
+    <meta name="keywords" content="bootstrap, wallet, banking, fintech mobile template, cordova, phonegap, mobile, html, responsive" />
+    <link rel="icon" type="image/png" href="assets/img/favicon.png" sizes="32x32">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/img/icon/192x192.png">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="manifest" href="__manifest.json">
+</head>
+
+<body>
+
+    <!-- loader -->
+    <div id="loader">
+        <img src="assets/img/loading-icon.png" alt="icon" class="loading-icon">
+    </div>
+    <!-- * loader -->
+
+    <!-- App Header -->
+    <div class="appHeader no-border transparent position-absolute">
+        <div class="left">
+            <a href="app-login.html" class="headerButton goBack">
+                <ion-icon name="chevron-back-outline"></ion-icon>
+            </a>
+        </div>
+        <div class="pageTitle"></div>
+        <div class="right">
+        </div>
+    </div>
+    <!-- * App Header -->
+
+    <!-- App Capsule -->
+    <div id="appCapsule">
+
+        <div class="section mt-2 text-center">
+            <h1>Enter OTP Code</h1>
+            <h4>Enter 6 digit OTP verification code sent to your email</h4>
+        </div>
+        <div class="section mb-5 p-2">
+            <form id="otpForm">
+                <div class="form-group basic">
+                    <input type="text" class="form-control verification-input" id="otpcode" placeholder="••••••"
+                        maxlength="6" required>
+                </div>
+
+                <!-- Error message display -->
+                <div id="errorMessage" class="alert alert-danger mt-2" style="display: none;"></div>
+                
+                <!-- Success message display -->
+                <div id="successMessage" class="alert alert-success mt-2" style="display: none;"></div>
+
+                <div class="form-button-group transparent">
+                    <button type="submit" class="btn btn-primary btn-block btn-lg" id="verifyBtn">
+                        <span id="verifyBtnText">Verify</span>
+                        <span id="verifySpinner" class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
+    <!-- * App Capsule -->
+
+    <!-- ========= JS Files =========  -->
+    <!-- Bootstrap -->
+    <script src="assets/js/lib/bootstrap.bundle.min.js"></script>
+    <!-- Ionicons -->
+    <script type="module" src="../../unpkg.com/ionicons%405.5.2/dist/ionicons/ionicons.js"></script>
+    <!-- Splide -->
+    <script src="assets/js/plugins/splide/splide.min.js"></script>
+    <!-- Base Js File -->
+    <script src="assets/js/base.js"></script>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api/auth';
+        
+        // Check if user came from login page
+        window.addEventListener('load', function() {
+            const loginEmail = sessionStorage.getItem('loginEmail');
+            if (!loginEmail) {
+                // Redirect back to login if no email stored
+                window.location.href = 'app-login.html';
+            }
+        });
+        
+        document.getElementById('otpForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const otpCode = document.getElementById('otpcode').value.trim();
+            const loginEmail = sessionStorage.getItem('loginEmail');
+            const verifyBtn = document.getElementById('verifyBtn');
+            const verifyBtnText = document.getElementById('verifyBtnText');
+            const verifySpinner = document.getElementById('verifySpinner');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            
+            if (!loginEmail) {
+                errorMessage.textContent = 'Session expired. Please login again.';
+                errorMessage.style.display = 'block';
+                setTimeout(() => {
+                    window.location.href = 'app-login.html';
+                }, 2000);
+                return;
+            }
+            
+            // Hide previous messages
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            
+            // Show loading state
+            verifyBtn.disabled = true;
+            verifyBtnText.textContent = 'Verifying...';
+            verifySpinner.style.display = 'inline-block';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/login/verify-otp`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: loginEmail,
+                        otp: otpCode
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // OTP verification successful
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userData', JSON.stringify(data.user));
+                    
+                    // Clear session storage
+                    sessionStorage.removeItem('loginEmail');
+                    
+                    successMessage.textContent = data.message;
+                    successMessage.style.display = 'block';
+                    
+                    // Redirect based on user role
+                    setTimeout(() => {
+                        if (data.user.is_admin) {
+                            window.location.href = '../admin/admin.html';
+                        } else {
+                            window.location.href = '../pages/dashboard.html';
+                        }
+                    }, 1500);
+                } else {
+                    // Show error message
+                    errorMessage.textContent = data.error || 'OTP verification failed. Please try again.';
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('OTP verification error:', error);
+                errorMessage.textContent = 'Network error. Please check your connection and try again.';
+                errorMessage.style.display = 'block';
+            } finally {
+                // Reset button state
+                verifyBtn.disabled = false;
+                verifyBtnText.textContent = 'Verify';
+                verifySpinner.style.display = 'none';
+            }
+        });
+        
+        // Auto-focus on OTP input
+        document.getElementById('otpcode').focus();
+        
+        // Only allow numeric input for OTP
+        document.getElementById('otpcode').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    </script>
+
+</body>
+
+</html>

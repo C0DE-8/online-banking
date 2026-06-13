@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Logs - Fconvenience bank</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a',
+                        secondary: '#3b82f6',
+                        accent: '#60a5fa',
+                        dark: '#0f172a',
+                        light: '#f8fafc',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-light min-h-screen">
+    
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-primary">Fconvenience bank</h1>
+                    <div class="hidden lg:block ml-10">
+                        <div class="flex items-baseline space-x-4">
+                            <a href="dashboard.html" class="text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors px-3 py-2 rounded-md">Dashboard</a>
+                            <a href="transactions-history.html" class="text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors px-3 py-2 rounded-md">Transactions</a>
+                            <a href="settings.html" class="text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors px-3 py-2 rounded-md">Settings</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <a href="settings.html" class="text-gray-700 hover:text-primary px-3 py-2 rounded-md">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Activity Logs</h2>
+            <p class="text-gray-600">View all your account activity and transaction history</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">All Activity</h3>
+                    <span id="logCount" class="text-sm text-gray-600">Loading...</span>
+                </div>
+            </div>
+            
+            <div id="logsContainer" class="divide-y divide-gray-200">
+                <div class="p-6 text-center text-gray-500">
+                    <svg class="w-12 h-12 mx-auto mb-4 text-gray-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <p>Loading activity logs...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE_URL = window.getApiBaseUrl("user");
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            window.location.href = '../auth/login.html';
+        }
+
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        async function loadAllLogs() {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/logs`);
+                const logs = response.data.logs;
+                
+                document.getElementById('logCount').textContent = `${logs.length} activities`;
+                
+                const logsContainer = document.getElementById('logsContainer');
+                if (logs.length === 0) {
+                    logsContainer.innerHTML = `
+                        <div class="p-12 text-center">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <p class="text-gray-500">No activity logs found</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                logsContainer.innerHTML = logs.map(log => {
+                    const activityIcon = getActivityIcon(log.activity_type);
+                    const activityColor = getActivityColor(log.activity_type);
+                    
+                    return `
+                        <div class="p-6 hover:bg-gray-50 transition-colors">
+                            <div class="flex items-start space-x-4">
+                                <div class="flex-shrink-0">
+                                    <div class="w-12 h-12 rounded-full ${activityColor} flex items-center justify-center">
+                                        ${activityIcon}
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-start justify-between">
+                                        <div>
+                                            <p class="text-sm font-semibold text-gray-900 capitalize">${log.activity_type.replace(/_/g, ' ')}</p>
+                                            <p class="text-sm text-gray-600 mt-1">${log.description}</p>
+                                        </div>
+                                        <span class="text-xs text-gray-500 whitespace-nowrap ml-4">${log.formatted_time}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load logs:', error);
+                document.getElementById('logsContainer').innerHTML = `
+                    <div class="p-12 text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-red-500">Failed to load activity logs</p>
+                    </div>
+                `;
+            }
+        }
+
+        function getActivityIcon(type) {
+            const icons = {
+                login: '<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>',
+                transfer: '<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>',
+                atm_card_request: '<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>',
+                set_pin: '<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>',
+                default: '<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+            };
+            return icons[type] || icons.default;
+        }
+
+        function getActivityColor(type) {
+            const colors = {
+                login: 'bg-green-500',
+                transfer: 'bg-blue-500',
+                atm_card_request: 'bg-purple-500',
+                set_pin: 'bg-yellow-500',
+                update_pin: 'bg-yellow-500',
+                profile_update: 'bg-indigo-500',
+                default: 'bg-gray-500'
+            };
+            return colors[type] || colors.default;
+        }
+
+        loadAllLogs();
+    </script>
+</body>
+</html>

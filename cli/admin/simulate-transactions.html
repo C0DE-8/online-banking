@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulate Transactions - Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+
+  <style>
+    /* =========================================================
+       Dark mode styles
+       ========================================================= */
+    .dark { color-scheme: dark; }
+    .dark body { background-color: #0f172a; color: #e2e8f0; }
+    .dark .bg-white { background-color: #1e293b; }
+    .dark .text-gray-900 { color: #f1f5f9; }
+    .dark .text-gray-700 { color: #cbd5e1; }
+    .dark .text-gray-600 { color: #cbd5e1; }
+    .dark .text-gray-500 { color: #94a3b8; }
+    .dark .border-gray-200 { border-color: #334155; }
+    .dark .border-gray-300 { border-color: #475569; }
+
+    .dark input, .dark select, .dark textarea {
+      background-color: #334155;
+      color: #f1f5f9;
+      border-color: #475569;
+    }
+    .dark input:focus, .dark select:focus, .dark textarea:focus {
+      background-color: #475569;
+    }
+    .dark .hover\:bg-gray-100:hover { background-color: #334155; }
+    .dark .bg-gray-50 { background-color: #0f172a; }
+
+    /* =========================================================
+       Toast
+       ========================================================= */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 16px 24px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      z-index: 9999;
+      animation: slideIn 0.3s ease-out;
+      max-width: 420px;
+      font-weight: 600;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(420px); opacity: 0; }
+      to   { transform: translateX(0); opacity: 1; }
+    }
+    .toast.success { background-color: #10b981; color: white; }
+    .toast.error   { background-color: #ef4444; color: white; }
+    .toast.info    { background-color: #3b82f6; color: white; }
+
+    /* =========================================================
+       Mobile-friendly history (cards on small screens)
+       ========================================================= */
+    @media (max-width: 640px) {
+      .history-cards { display: grid; gap: 12px; }
+      .history-card {
+        border: 1px solid rgba(255,255,255,.10);
+        border-radius: 14px;
+        padding: 14px;
+        background: rgba(15, 23, 42, 0.35);
+        backdrop-filter: blur(10px);
+      }
+      .history-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 13px;
+        padding: 6px 0;
+        border-bottom: 1px dashed rgba(255,255,255,.10);
+      }
+      .history-row:last-child { border-bottom: none; }
+      .history-label { color: rgba(148,163,184,1); }
+      .history-value { color: rgba(226,232,240,1); font-weight: 700; text-align: right; }
+      .edit-btn {
+        width: 100%;
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-weight: 800;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- NAV -->
+  <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center space-x-8">
+          <h1 class="text-2xl font-bold text-blue-600">SecureBank Admin</h1>
+          <div class="hidden md:flex space-x-1">
+            <a href="admin-dashboard.html" class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition-colors">Dashboard</a>
+            <a href="user-management.html" class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition-colors">Users</a>
+            <a href="transfer-management.html" class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition-colors">Transfers</a>
+            <a href="atm-management.html" class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition-colors">ATM</a>
+            <a href="simulate-transactions.html" class="px-4 py-2 text-white bg-blue-600 rounded-lg font-medium transition-colors">Simulate</a>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <button id="themeToggle" class="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+            <svg id="sunIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+            <svg id="moonIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+            </svg>
+          </button>
+
+          <div class="text-right hidden sm:block">
+            <p class="text-sm font-medium text-gray-900" id="adminName">Admin User</p>
+            <p class="text-xs text-gray-500">Administrator</p>
+          </div>
+
+          <button id="mobileMenuBtn" class="md:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+
+          <button id="logoutBtn" class="hidden md:block px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobileMenu" class="hidden md:hidden border-t border-gray-200">
+      <div class="px-4 py-3 space-y-2">
+        <a href="admin-dashboard.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Dashboard</a>
+        <a href="user-management.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Users</a>
+        <a href="transfer-management.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Transfers</a>
+        <a href="atm-management.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">ATM</a>
+        <a href="simulate-transactions.html" class="block px-4 py-2 text-white bg-blue-600 rounded-lg">Simulate</a>
+        <button id="mobileLogoutBtn" class="w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg">
+          Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Simulate -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Simulate Transactions</h2>
+
+      <form id="simulateForm" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">User *</label>
+            <div class="flex gap-2">
+              <input type="number" id="userId" required readonly
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" />
+              <button type="button" id="selectUserBtn"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors whitespace-nowrap">
+                Select User
+              </button>
+            </div>
+            <p id="selectedUserInfo" class="text-sm text-gray-500 mt-1"></p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Transfer Type *</label>
+            <select id="transferType" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <option value="local">Local Transfer</option>
+              <option value="wire">Wire Transfer</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Direction *</label>
+            <select id="direction" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <option value="credit">Credit (Add Money)</option>
+              <option value="debit">Debit (Remove Money)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">From Account *</label>
+            <select id="fromAccount" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <option value="current">Current Account</option>
+              <option value="savings">Savings Account</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Total Amount *</label>
+            <input type="number" id="amount" step="0.01" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
+            <input type="date" id="startDate" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+            <input type="date" id="endDate"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Mode *</label>
+            <select id="mode" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <option value="single">Single Transaction</option>
+              <option value="daily">Daily (One per day)</option>
+              <option value="count">Count (Spread evenly)</option>
+            </select>
+          </div>
+
+          <div id="countField" class="hidden">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Number of Transactions</label>
+            <input type="number" id="count" min="1" max="365"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          <div class="flex items-center">
+            <input type="checkbox" id="applyToBalance"
+              class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+            <label for="applyToBalance" class="ml-2 text-sm font-medium text-gray-700">Apply to User Balance</label>
+          </div>
+        </div>
+
+        <div class="border-t border-gray-200 pt-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Optional Transaction Details</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
+              <input type="text" id="bankName"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Account Name</label>
+              <input type="text" id="accountName"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
+              <input type="text" id="accountNumber"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Reason</label>
+              <input type="text" id="reason"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+        </div>
+
+        <div id="wireFields" class="border-t border-gray-200 pt-6 hidden">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Wire Transfer Details</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Bank Country</label>
+              <input type="text" id="bankCountry"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Routing Number</label>
+              <input type="text" id="routineNumber"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">IMF Code</label>
+              <input type="text" id="imfCode"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">COT Code</label>
+              <input type="text" id="cotCode"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">TAX Code</label>
+              <input type="text" id="taxCode"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" id="simulateBtn"
+          class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+          Simulate Transactions
+        </button>
+      </form>
+    </div>
+
+    <!-- History -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h2 class="text-2xl font-bold text-gray-900">User Transaction History</h2>
+
+        <div class="flex gap-2 w-full sm:w-auto">
+          <input type="number" id="historyUserId" readonly placeholder="Select User"
+            class="px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" />
+          <button id="selectHistoryUserBtn"
+            class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors whitespace-nowrap">
+            Select User
+          </button>
+          <button id="loadHistoryBtn"
+            class="px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors">
+            Load
+          </button>
+        </div>
+      </div>
+
+      <div class="mb-4 flex gap-2">
+        <button id="showLocalBtn"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
+          Local Transfers
+        </button>
+        <button id="showWireBtn"
+          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors">
+          Wire Transfers
+        </button>
+      </div>
+
+      <div id="historyContainer">
+        <p class="text-gray-500 text-center py-8">Select a user and click "Load" to view transactions</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- User Selection Modal -->
+  <div id="userModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-2xl font-bold text-gray-900">Select User</h3>
+          <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <input type="text" id="userSearch" placeholder="Search by name, email, or account number..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+      </div>
+
+      <div id="userList" class="p-6 overflow-y-auto max-h-[60vh]">
+        <p class="text-gray-500 text-center py-8">Loading users...</p>
+      </div>
+
+      <div class="p-4 border-t border-gray-200 flex justify-between items-center">
+        <div id="paginationInfo" class="text-sm text-gray-600"></div>
+        <div class="flex gap-2">
+          <button id="prevPageBtn"
+            class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">
+            Previous
+          </button>
+          <button id="nextPageBtn"
+            class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Transfer Modal -->
+  <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+      <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+        <div>
+          <h3 class="text-xl font-bold text-gray-900">Edit Transfer</h3>
+          <p class="text-sm text-gray-500" id="editMeta">Transfer ID: —</p>
+        </div>
+        <button id="closeEditBtn" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto max-h-[70vh]">
+        <form id="editForm" class="space-y-5">
+          <input type="hidden" id="editTransferId" />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Transfer Type</label>
+              <select id="edit_transfer_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="local">local</option>
+                <option value="wire">wire</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">From Account</label>
+              <select id="edit_from_account" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="current">current</option>
+                <option value="savings">savings</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
+              <input id="edit_bank_name" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Account Name</label>
+              <input id="edit_account_name" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
+              <input id="edit_account_number" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Reason</label>
+              <input id="edit_reason" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+              <input id="edit_amount" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Fee</label>
+              <input id="edit_fee" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <select id="edit_status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="pending">pending</option>
+                <option value="processing">processing</option>
+                <option value="completed">completed</option>
+                <option value="failed">failed</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+              <input id="edit_date" type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Time</label>
+              <input id="edit_time" type="time" step="60" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+
+          <div id="wireEditFields" class="hidden border-t border-gray-200 pt-4">
+            <h4 class="font-semibold text-gray-900 mb-3">Wire Fields</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Bank Country</label>
+                <input id="edit_bank_country" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Routine Number</label>
+                <input id="edit_routine_number" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <div class="p-4 border-t border-gray-200 flex items-center justify-end gap-2">
+        <button id="editCancelBtn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+          Cancel
+        </button>
+        <button id="saveEditBtn" class="px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+          Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = window.getApiBaseUrl("admin");
+
+    let currentHistoryType = 'local';
+    let currentPage = 1;
+    let totalPages = 1;
+    let searchQuery = '';
+    let selectingForHistory = false;
+
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s ease-out reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const sunIcon = document.getElementById('sunIcon');
+    const moonIcon = document.getElementById('moonIcon');
+    const html = document.documentElement;
+
+    const savedTheme = localStorage.getItem('adminTheme') || 'dark';
+    if (savedTheme === 'light') {
+      html.classList.remove('dark');
+      sunIcon.classList.remove('hidden');
+      moonIcon.classList.add('hidden');
+    }
+
+    themeToggle.addEventListener('click', () => {
+      html.classList.toggle('dark');
+      const isDark = html.classList.contains('dark');
+      localStorage.setItem('adminTheme', isDark ? 'dark' : 'light');
+      sunIcon.classList.toggle('hidden');
+      moonIcon.classList.toggle('hidden');
+    });
+
+    // Mobile menu toggle
+    document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+      document.getElementById('mobileMenu').classList.toggle('hidden');
+    });
+
+    function checkAuth() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '../auth/login.html';
+        return false;
+      }
+      return true;
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = '../auth/login.html';
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    document.getElementById('mobileLogoutBtn').addEventListener('click', logout);
+
+    // Mode
+    document.getElementById('mode').addEventListener('change', (e) => {
+      const countField = document.getElementById('countField');
+      if (e.target.value === 'count') countField.classList.remove('hidden');
+      else countField.classList.add('hidden');
+    });
+
+    // Transfer type in simulate
+    document.getElementById('transferType').addEventListener('change', (e) => {
+      const wireFields = document.getElementById('wireFields');
+      if (e.target.value === 'wire') wireFields.classList.remove('hidden');
+      else wireFields.classList.add('hidden');
+    });
+
+    // Simulate submit
+    document.getElementById('simulateForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const token = localStorage.getItem('token');
+      const userId = document.getElementById('userId').value;
+      const simulateBtn = document.getElementById('simulateBtn');
+
+      const payload = {
+        transfer_type: document.getElementById('transferType').value,
+        direction: document.getElementById('direction').value,
+        amount: parseFloat(document.getElementById('amount').value),
+        from_account: document.getElementById('fromAccount').value,
+        start_date: document.getElementById('startDate').value,
+        mode: document.getElementById('mode').value,
+        apply_to_balance: document.getElementById('applyToBalance').checked
+      };
+
+      if (document.getElementById('endDate').value) payload.end_date = document.getElementById('endDate').value;
+      if (payload.mode === 'count') payload.count = parseInt(document.getElementById('count').value);
+
+      if (document.getElementById('bankName').value) payload.bank_name = document.getElementById('bankName').value;
+      if (document.getElementById('accountName').value) payload.account_name = document.getElementById('accountName').value;
+      if (document.getElementById('accountNumber').value) payload.account_number = document.getElementById('accountNumber').value;
+      if (document.getElementById('reason').value) payload.reason = document.getElementById('reason').value;
+
+      if (payload.transfer_type === 'wire') {
+        if (document.getElementById('bankCountry').value) payload.bank_country = document.getElementById('bankCountry').value;
+        if (document.getElementById('routineNumber').value) payload.routine_number = document.getElementById('routineNumber').value;
+        if (document.getElementById('imfCode').value) payload.imf_code = document.getElementById('imfCode').value;
+        if (document.getElementById('cotCode').value) payload.cot_code = document.getElementById('cotCode').value;
+        if (document.getElementById('taxCode').value) payload.tax_code = document.getElementById('taxCode').value;
+      }
+
+      simulateBtn.disabled = true;
+      simulateBtn.textContent = 'Simulating...';
+
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/users/${userId}/simulate/transactions`,
+          payload,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        showToast(`Successfully simulated ${response.data.total_entries} transaction(s)!`, 'success');
+        document.getElementById('simulateForm').reset();
+      } catch (error) {
+        console.error('Simulation error:', error);
+        showToast(error.response?.data?.error || 'Failed to simulate transactions', 'error');
+      } finally {
+        simulateBtn.disabled = false;
+        simulateBtn.textContent = 'Simulate Transactions';
+      }
+    });
+
+    /* =========================================================
+       History + Edit Transfer (Admin)
+       ========================================================= */
+
+    function parseMoneyString(val) {
+      if (val === null || val === undefined) return "";
+      const num = String(val).replace(/[^\d.-]/g, "");
+      return num ? Number(num) : "";
+    }
+
+    function splitDateTime(dateStr) {
+      // expects "YYYY-MM-DD HH:mm:ss"
+      if (!dateStr) return { d: "", t: "" };
+      const parts = String(dateStr).split(" ");
+      const d = parts[0] || "";
+      const time = parts[1] || "";
+      return { d, t: time.slice(0,5) }; // HH:mm
+    }
+
+    function statusBadge(status) {
+      const s = String(status || '').toLowerCase();
+      const statusColor =
+        s === 'completed' ? 'green' :
+        s === 'processing' ? 'yellow' :
+        s === 'pending' ? 'blue' : 'red';
+
+      return { statusColor, label: s || '-' };
+    }
+
+    async function loadHistory(userId, type) {
+      const token = localStorage.getItem('token');
+      const container = document.getElementById('historyContainer');
+
+      container.innerHTML = '<p class="text-gray-500 text-center py-8">Loading...</p>';
+
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}/users/${userId}/history/${type}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const transactions = type === 'local' ? response.data.history : response.data.wire_history;
+
+        if (!transactions || transactions.length === 0) {
+          container.innerHTML = '<p class="text-gray-500 text-center py-8">No transactions found</p>';
+          return;
+        }
+
+        // Desktop table
+        let tableHTML = `
+          <div class="hidden sm:block overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Account</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bank</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Account Name</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fee</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+        `;
+
+        // Mobile cards
+        let cardsHTML = `<div class="history-cards sm:hidden">`;
+
+        transactions.forEach(t => {
+          const badge = statusBadge(t.status);
+          const data = encodeURIComponent(JSON.stringify({ ...t, type }));
+
+          // Desktop row
+          tableHTML += `
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${t.id}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${t.from_account || '-'}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${t.bank_name || '-'}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${t.account_name || '-'}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${t.amount}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${t.fee}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-${badge.statusColor}-100 text-${badge.statusColor}-800">
+                  ${badge.label}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${t.date}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <button class="px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-sm font-semibold editTransferBtn"
+                        data-transfer="${data}">
+                  Edit
+                </button>
+              </td>
+            </tr>
+          `;
+
+          // Mobile card
+          cardsHTML += `
+            <div class="history-card">
+              <div class="flex items-center justify-between mb-2">
+                <div class="text-sm font-bold">#${t.id}</div>
+                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-${badge.statusColor}-100 text-${badge.statusColor}-800">
+                  ${badge.label}
+                </span>
+              </div>
+
+              <div class="history-row"><div class="history-label">Account</div><div class="history-value">${t.from_account || '-'}</div></div>
+              <div class="history-row"><div class="history-label">Bank</div><div class="history-value">${t.bank_name || '-'}</div></div>
+              <div class="history-row"><div class="history-label">Name</div><div class="history-value">${t.account_name || '-'}</div></div>
+              <div class="history-row"><div class="history-label">Amount</div><div class="history-value">${t.amount}</div></div>
+              <div class="history-row"><div class="history-label">Fee</div><div class="history-value">${t.fee}</div></div>
+              <div class="history-row"><div class="history-label">Date</div><div class="history-value">${t.date}</div></div>
+
+              <button class="edit-btn bg-blue-600 text-white hover:bg-blue-700 editTransferBtn"
+                      data-transfer="${data}">
+                Edit Transfer
+              </button>
+            </div>
+          `;
+        });
+
+        tableHTML += `</tbody></table></div>`;
+        cardsHTML += `</div>`;
+
+        container.innerHTML = tableHTML + cardsHTML;
+
+        // Hook edit buttons
+        document.querySelectorAll(".editTransferBtn").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const data = JSON.parse(decodeURIComponent(btn.dataset.transfer || "{}"));
+            openEditModal(data);
+          });
+        });
+
+      } catch (error) {
+        console.error('History load error:', error);
+        document.getElementById('historyContainer').innerHTML =
+          '<p class="text-red-500 text-center py-8">Failed to load transaction history</p>';
+        showToast(error.response?.data?.error || 'Failed to load history', 'error');
+      }
+    }
+
+    // Buttons for loading history
+    document.getElementById('loadHistoryBtn').addEventListener('click', () => {
+      const userId = document.getElementById('historyUserId').value;
+      if (!userId) return showToast('Please select a User', 'error');
+      loadHistory(userId, currentHistoryType);
+    });
+
+    document.getElementById('showLocalBtn').addEventListener('click', () => {
+      currentHistoryType = 'local';
+      document.getElementById('showLocalBtn').className =
+        'px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors';
+      document.getElementById('showWireBtn').className =
+        'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors';
+
+      const userId = document.getElementById('historyUserId').value;
+      if (userId) loadHistory(userId, 'local');
+    });
+
+    document.getElementById('showWireBtn').addEventListener('click', () => {
+      currentHistoryType = 'wire';
+      document.getElementById('showWireBtn').className =
+        'px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors';
+      document.getElementById('showLocalBtn').className =
+        'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors';
+
+      const userId = document.getElementById('historyUserId').value;
+      if (userId) loadHistory(userId, 'wire');
+    });
+
+    // Edit modal handlers
+    function openEditModal(t) {
+      document.getElementById("editModal").classList.remove("hidden");
+      document.getElementById("editTransferId").value = t.id;
+      document.getElementById("editMeta").textContent = `Transfer ID: ${t.id} • Type: ${t.type}`;
+
+      // Fill
+      document.getElementById("edit_transfer_type").value = t.type || "local";
+      document.getElementById("edit_from_account").value = t.from_account || "current";
+      document.getElementById("edit_bank_name").value = t.bank_name || "";
+      document.getElementById("edit_account_name").value = t.account_name || "";
+      document.getElementById("edit_account_number").value = t.account_number || "";
+      document.getElementById("edit_reason").value = t.reason || "";
+      document.getElementById("edit_amount").value = parseMoneyString(t.amount);
+      document.getElementById("edit_fee").value = parseMoneyString(t.fee);
+      document.getElementById("edit_status").value = (t.status || "pending").toLowerCase();
+
+      const dt = splitDateTime(t.date);
+      document.getElementById("edit_date").value = dt.d;
+      document.getElementById("edit_time").value = dt.t || "12:00";
+
+      // wire
+      const isWire = (t.type === "wire");
+      document.getElementById("wireEditFields").classList.toggle("hidden", !isWire);
+      document.getElementById("edit_bank_country").value = t.bank_country || "";
+      document.getElementById("edit_routine_number").value = t.routine_number || "";
+
+      document.getElementById("edit_transfer_type").onchange = (e) => {
+        const wire = e.target.value === "wire";
+        document.getElementById("wireEditFields").classList.toggle("hidden", !wire);
+      };
+    }
+
+    function closeEditModal() {
+      document.getElementById("editModal").classList.add("hidden");
+    }
+
+    document.getElementById("closeEditBtn").addEventListener("click", closeEditModal);
+    document.getElementById("editCancelBtn").addEventListener("click", closeEditModal);
+    document.getElementById("editModal").addEventListener("click", (e) => {
+      if (e.target.id === "editModal") closeEditModal();
+    });
+
+    async function saveTransferUpdate() {
+      const token = localStorage.getItem("token");
+      const transferId = document.getElementById("editTransferId").value;
+
+      const transfer_type = document.getElementById("edit_transfer_type").value;
+
+      const date = document.getElementById("edit_date").value;
+      const time = document.getElementById("edit_time").value || "00:00";
+      const dateTime = date ? `${date} ${time}:00` : "";
+
+      const payload = {
+        transfer_type,
+        from_account: document.getElementById("edit_from_account").value,
+        bank_name: document.getElementById("edit_bank_name").value,
+        account_name: document.getElementById("edit_account_name").value,
+        account_number: document.getElementById("edit_account_number").value,
+        reason: document.getElementById("edit_reason").value,
+        amount: Number(document.getElementById("edit_amount").value || 0),
+        fee: Number(document.getElementById("edit_fee").value || 0),
+        status: document.getElementById("edit_status").value,
+        date: dateTime
+      };
+
+      if (transfer_type === "wire") {
+        payload.bank_country = document.getElementById("edit_bank_country").value;
+        payload.routine_number = document.getElementById("edit_routine_number").value;
+      }
+
+      // remove empty strings
+      Object.keys(payload).forEach(k => {
+        if (payload[k] === "" || payload[k] === null || payload[k] === undefined) delete payload[k];
+      });
+
+      const saveBtn = document.getElementById("saveEditBtn");
+      const oldText = saveBtn.textContent;
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saving...";
+
+      try {
+        await axios.put(
+          `${API_BASE_URL}/transfers/${transferId}`,
+          payload,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        showToast("Transfer updated successfully", "success");
+        closeEditModal();
+
+        const userId = document.getElementById('historyUserId').value;
+        if (userId) loadHistory(userId, currentHistoryType);
+
+      } catch (err) {
+        console.error("Update transfer error:", err);
+        showToast(err.response?.data?.error || err.response?.data?.message || "Failed to update transfer", "error");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = oldText;
+      }
+    }
+
+    document.getElementById("saveEditBtn").addEventListener("click", saveTransferUpdate);
+
+    /* =========================================================
+       Users Modal
+       ========================================================= */
+    async function loadUsers(page = 1, search = '') {
+      const token = localStorage.getItem('token');
+      const userList = document.getElementById('userList');
+
+      userList.innerHTML = '<p class="text-gray-500 text-center py-8">Loading users...</p>';
+
+      try {
+        const response = await axios.get(`${API_BASE_URL}/users`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { page, pageSize: 10, q: search }
+        });
+
+        const { users, total, pages } = response.data;
+        currentPage = page;
+        totalPages = pages;
+
+        if (!users || users.length === 0) {
+          userList.innerHTML = '<p class="text-gray-500 text-center py-8">No users found</p>';
+          return;
+        }
+
+        let html = '<div class="grid grid-cols-1 gap-4">';
+        users.forEach(user => {
+          const imageUrl = user.profile_image_url ? `http://localhost:5000${user.profile_image_url}` : '/icons/placeholder.png';
+
+          html += `
+            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors user-card"
+                 data-user-id="${user.id}"
+                 data-user-name="${user.full_name}"
+                 data-user-email="${user.email}">
+              <div class="flex items-center gap-4">
+                <img src="${imageUrl}" alt="${user.full_name}" class="w-16 h-16 rounded-full object-cover">
+                <div class="flex-1">
+                  <h4 class="font-semibold text-gray-900">${user.full_name}</h4>
+                  <p class="text-sm text-gray-600">${user.email}</p>
+                  <div class="flex flex-wrap gap-2 mt-2 text-xs text-gray-500">
+                    <span>ID: ${user.id}</span>
+                    <span>Account: ${user.account_number}</span>
+                    <span class="px-2 py-1 rounded-full ${user.acct_status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                      ${user.acct_status}
+                    </span>
+                  </div>
+                </div>
+                <div class="text-right hidden sm:block">
+                  <p class="text-sm font-medium text-gray-700">Current: ${user.currency_sign}${parseFloat(user.current_balance).toFixed(2)}</p>
+                  <p class="text-sm font-medium text-gray-700">Savings: ${user.currency_sign}${parseFloat(user.savings_balance).toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+
+        userList.innerHTML = html;
+
+        document.getElementById('paginationInfo').textContent = `Page ${page} of ${pages} (${total} users)`;
+        document.getElementById('prevPageBtn').disabled = page === 1;
+        document.getElementById('nextPageBtn').disabled = page === pages;
+
+        document.querySelectorAll('.user-card').forEach(card => {
+          card.addEventListener('click', () => {
+            const userId = card.dataset.userId;
+            const userName = card.dataset.userName;
+            const userEmail = card.dataset.userEmail;
+
+            if (selectingForHistory) {
+              document.getElementById('historyUserId').value = userId;
+            } else {
+              document.getElementById('userId').value = userId;
+              document.getElementById('selectedUserInfo').textContent = `${userName} (${userEmail})`;
+            }
+
+            closeUserModal();
+            showToast(`Selected user: ${userName}`, 'success');
+          });
+        });
+
+      } catch (error) {
+        console.error('Load users error:', error);
+        userList.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load users</p>';
+        showToast(error.response?.data?.error || 'Failed to load users', 'error');
+      }
+    }
+
+    function openUserModal(forHistory = false) {
+      selectingForHistory = forHistory;
+      document.getElementById('userModal').classList.remove('hidden');
+      document.getElementById('userSearch').value = '';
+      searchQuery = '';
+      loadUsers(1, '');
+    }
+
+    function closeUserModal() {
+      document.getElementById('userModal').classList.add('hidden');
+    }
+
+    document.getElementById('selectUserBtn').addEventListener('click', () => openUserModal(false));
+    document.getElementById('selectHistoryUserBtn').addEventListener('click', () => openUserModal(true));
+    document.getElementById('closeModalBtn').addEventListener('click', closeUserModal);
+
+    document.getElementById('userModal').addEventListener('click', (e) => {
+      if (e.target.id === 'userModal') closeUserModal();
+    });
+
+    let searchTimeout;
+    document.getElementById('userSearch').addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      searchQuery = e.target.value;
+      searchTimeout = setTimeout(() => loadUsers(1, searchQuery), 400);
+    });
+
+    document.getElementById('prevPageBtn').addEventListener('click', () => {
+      if (currentPage > 1) loadUsers(currentPage - 1, searchQuery);
+    });
+
+    document.getElementById('nextPageBtn').addEventListener('click', () => {
+      if (currentPage < totalPages) loadUsers(currentPage + 1, searchQuery);
+    });
+
+    // Init
+    if (checkAuth()) {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('startDate').value = today;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Center - Fconvenience bank</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a',
+                        secondary: '#3b82f6',
+                        accent: '#60a5fa',
+                        dark: '#0f172a',
+                        light: '#f8fafc',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        .toast-enter {
+            animation: slideInRight 0.3s ease-out;
+        }
+        .toast-exit {
+            animation: slideOutRight 0.3s ease-in;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-light min-h-screen">
+    
+    <div id="toastContainer" class="fixed top-4 right-4 z-[100] space-y-2"></div>
+
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-primary">Fconvenience bank</h1>
+                    <div class="hidden lg:block ml-10">
+                        <div class="flex items-baseline space-x-4">
+                            <a href="dashboard.html" class="text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors px-3 py-2 rounded-md">Dashboard</a>
+                            <a href="wire-transfer.html" class="text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors px-3 py-2 rounded-md">Wire Transfer</a>
+                            <a href="local-transfer.html" class="text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors px-3 py-2 rounded-md">Local Transfer</a>
+                            <a href="self-transfer.html" class="text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors px-3 py-2 rounded-md">Self Transfer</a>
+                            <a href="transactions-history.html" class="text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors px-3 py-2 rounded-md">Transactions</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button id="userMenuButton" class="flex items-center space-x-3 hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors">
+                            <img id="profileImage" src="/icons/placeholder.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-primary hidden">
+                            <div class="hidden md:block text-left">
+                                <p id="userName" class="text-sm font-medium text-gray-900"></p>
+                                <p class="text-xs text-gray-500">View Profile</p>
+                            </div>
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="userDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
+                            <a href="settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                    Settings
+                                </div>
+                            </a>
+                            <a href="transactions-history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    Statements
+                                </div>
+                            </a>
+                            <hr class="my-2">
+                            <button id="logoutButton" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                    </svg>
+                                    Logout
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    <button id="mobileMenuButton" class="lg:hidden text-gray-700 hover:text-primary">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobileMenu" class="hidden lg:hidden border-t border-gray-200 bg-white">
+            <div class="px-4 py-3 space-y-2">
+                <a href="dashboard.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Dashboard</a>
+                <a href="wire-transfer.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Wire Transfer</a>
+                <a href="local-transfer.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Local Transfer</a>
+                <a href="self-transfer.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Self Transfer</a>
+                <a href="transactions-history.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Transactions</a>
+                <a href="support.html" class="block text-primary font-medium px-3 py-2 rounded-md bg-blue-50">Support</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Support Center</h2>
+            <p class="text-gray-600">Get help with your account or submit a support ticket</p>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Create New Ticket
+                    </h3>
+                    <form id="createTicketForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                            <input type="text" id="ticketSubject" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Brief description of your issue">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                            <textarea id="ticketMessage" required rows="6" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none" placeholder="Describe your issue in detail..."></textarea>
+                        </div>
+                        <button type="submit" id="createTicketBtn" class="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-900 transition-colors font-medium flex items-center justify-center">
+                            <span id="createTicketBtnText">Submit Ticket</span>
+                            <svg id="createTicketSpinner" class="hidden w-5 h-5 ml-2 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="bg-blue-50 rounded-2xl p-6 border border-blue-200 shadow-sm mt-6">
+                    <h3 class="text-lg font-bold text-primary mb-3 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Quick Help
+                    </h3>
+                    <div class="space-y-2 text-sm text-gray-700">
+                        <p><strong>Response Time:</strong> 24-48 hours</p>
+                        <p><strong>Support Hours:</strong> Mon-Fri, 9AM-5PM</p>
+                        <p><strong>Emergency:</strong> Contact your branch</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        My Support Tickets
+                    </h3>
+                    <div id="ticketsList" class="space-y-4">
+                        <p class="text-gray-500">Loading tickets...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="ticketModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white">
+                <div>
+                    <h3 id="modalTicketSubject" class="text-xl font-bold text-gray-900"></h3>
+                    <p id="modalTicketStatus" class="text-sm text-gray-600 mt-1"></p>
+                </div>
+                <button id="closeTicketModal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="messagesContainer" class="p-6 space-y-4 max-h-96 overflow-y-auto">
+                <p class="text-gray-500">Loading messages...</p>
+            </div>
+            <div class="p-6 border-t border-gray-200 bg-gray-50">
+                <form id="replyForm" class="space-y-3">
+                    <textarea id="replyMessage" required rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none" placeholder="Type your reply..."></textarea>
+                    <button type="submit" id="replyBtn" class="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-900 transition-colors font-medium flex items-center justify-center">
+                        <span id="replyBtnText">Send Reply</span>
+                        <svg id="replySpinner" class="hidden w-5 h-5 ml-2 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.getApiBaseUrl("user");
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        if (!token || !user.id) {
+            window.location.href = '../auth/login.html';
+        }
+
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        let currentTicketId = null;
+        let refreshInterval = null;
+        let lastMessageCount = 0;
+
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+            const icon = type === 'success' 
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'
+                : type === 'error'
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+            
+            toast.className = `${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 min-w-[300px] toast-enter`;
+            toast.innerHTML = `
+                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    ${icon}
+                </svg>
+                <span class="flex-1">${message}</span>
+                <button onclick="this.parentElement.remove()" class="text-white hover:text-gray-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-exit');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        function setLoading(buttonId, spinnerId, textId, isLoading) {
+            const button = document.getElementById(buttonId);
+            const spinner = document.getElementById(spinnerId);
+            const text = document.getElementById(textId);
+            
+            if (isLoading) {
+                button.disabled = true;
+                button.classList.add('opacity-75', 'cursor-not-allowed');
+                spinner.classList.remove('hidden');
+            } else {
+                button.disabled = false;
+                button.classList.remove('opacity-75', 'cursor-not-allowed');
+                spinner.classList.add('hidden');
+            }
+        }
+
+        async function loadUserProfile() {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/profile`);
+                const userData = response.data.user;
+                
+                document.getElementById('userName').textContent = userData.username || 'User';
+                
+                if (userData.profile_image_url) {
+                    const imageUrl = window.getApiAssetUrl(userData.profile_image_url);
+                    document.getElementById('profileImage').src = imageUrl;
+                    document.getElementById('profileImage').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Failed to load profile:', error);
+            }
+        }
+
+        async function loadTickets() {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/my-tickets`);
+                const tickets = response.data;
+                
+                const ticketsContainer = document.getElementById('ticketsList');
+                if (tickets.length === 0) {
+                    ticketsContainer.innerHTML = '<p class="text-gray-500">No support tickets found. Create one to get started!</p>';
+                    return;
+                }
+                
+                ticketsContainer.innerHTML = tickets.map(ticket => {
+                    const statusColor = ticket.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+                    return `
+                        <div class="p-4 border border-gray-200 rounded-lg hover:border-primary transition-colors cursor-pointer" onclick="viewTicket(${ticket.id})">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-semibold text-gray-900">${ticket.subject}</h4>
+                                <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${statusColor}">
+                                    ${ticket.status.toUpperCase()}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">Ticket #${ticket.id}</p>
+                            <p class="text-xs text-gray-500">Created: ${new Date(ticket.created_at).toLocaleString()}</p>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load tickets:', error);
+                document.getElementById('ticketsList').innerHTML = '<p class="text-red-500">Failed to load tickets</p>';
+            }
+        }
+
+        async function silentRefreshMessages() {
+            if (!currentTicketId) return;
+            
+            try {
+                const response = await axios.get(`${API_BASE_URL}/${currentTicketId}/messages`);
+                const { messages } = response.data;
+                
+                if (messages.length !== lastMessageCount) {
+                    const messagesContainer = document.getElementById('messagesContainer');
+                    const scrollPosition = messagesContainer.scrollTop;
+                    const isScrolledToBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop === messagesContainer.clientHeight;
+                    
+                    if (messages.length === 0) {
+                        messagesContainer.innerHTML = '<p class="text-gray-500">No messages yet</p>';
+                    } else {
+                        messagesContainer.innerHTML = messages.map(msg => {
+                            const isUser = msg.sender === 'user';
+                            const bgColor = isUser ? 'bg-primary text-white' : 'bg-gray-100 text-gray-900';
+                            const alignment = isUser ? 'ml-auto' : 'mr-auto';
+                            
+                            return `
+                                <div class="max-w-[80%] ${alignment}">
+                                    <div class="flex items-center mb-1 ${isUser ? 'justify-end' : 'justify-start'}">
+                                        <span class="text-xs font-medium ${isUser ? 'text-primary' : 'text-gray-600'}">
+                                            ${isUser ? 'You' : 'Support Team'}
+                                        </span>
+                                    </div>
+                                    <div class="${bgColor} rounded-lg p-4">
+                                        <p class="text-sm">${msg.message}</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1 ${isUser ? 'text-right' : 'text-left'}">
+                                        ${new Date(msg.created_at).toLocaleString()}
+                                    </p>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                    
+                    if (isScrolledToBottom) {
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    } else {
+                        messagesContainer.scrollTop = scrollPosition;
+                    }
+                    
+                    lastMessageCount = messages.length;
+                    
+                    if (messages.length > lastMessageCount && messages[messages.length - 1].sender === 'support') {
+                        showToast('New message from support team', 'info');
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to refresh messages:', error);
+            }
+        }
+
+        function startAutoRefresh() {
+            if (refreshInterval) clearInterval(refreshInterval);
+            refreshInterval = setInterval(silentRefreshMessages, 10000);
+        }
+
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
+        async function viewTicket(ticketId) {
+            currentTicketId = ticketId;
+            
+            try {
+                const response = await axios.get(`${API_BASE_URL}/${ticketId}/messages`);
+                const { ticket, messages } = response.data;
+                
+                document.getElementById('modalTicketSubject').textContent = ticket.subject;
+                document.getElementById('modalTicketStatus').textContent = `Status: ${ticket.status.toUpperCase()} • Created: ${new Date(ticket.created_at).toLocaleString()}`;
+                
+                const messagesContainer = document.getElementById('messagesContainer');
+                if (messages.length === 0) {
+                    messagesContainer.innerHTML = '<p class="text-gray-500">No messages yet</p>';
+                } else {
+                    messagesContainer.innerHTML = messages.map(msg => {
+                        const isUser = msg.sender === 'user';
+                        const bgColor = isUser ? 'bg-primary text-white' : 'bg-gray-100 text-gray-900';
+                        const alignment = isUser ? 'ml-auto' : 'mr-auto';
+                        
+                        return `
+                            <div class="max-w-[80%] ${alignment}">
+                                <div class="flex items-center mb-1 ${isUser ? 'justify-end' : 'justify-start'}">
+                                    <span class="text-xs font-medium ${isUser ? 'text-primary' : 'text-gray-600'}">
+                                        ${isUser ? 'You' : 'Support Team'}
+                                    </span>
+                                </div>
+                                <div class="${bgColor} rounded-lg p-4">
+                                    <p class="text-sm">${msg.message}</p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1 ${isUser ? 'text-right' : 'text-left'}">
+                                    ${new Date(msg.created_at).toLocaleString()}
+                                </p>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+                lastMessageCount = messages.length;
+                
+                const replyForm = document.getElementById('replyForm');
+                const replyMessage = document.getElementById('replyMessage');
+                const replyBtn = document.getElementById('replyBtn');
+                
+                if (ticket.status === 'closed') {
+                    replyMessage.disabled = true;
+                    replyMessage.placeholder = 'This ticket is closed. Please create a new ticket for further assistance.';
+                    replyMessage.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    replyBtn.disabled = true;
+                    replyBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    replyBtn.innerHTML = 'Ticket Closed';
+                    stopAutoRefresh();
+                } else {
+                    replyMessage.disabled = false;
+                    replyMessage.placeholder = 'Type your reply...';
+                    replyMessage.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                    replyBtn.disabled = false;
+                    replyBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    replyBtn.innerHTML = '<span id="replyBtnText">Send Reply</span><svg id="replySpinner" class="hidden w-5 h-5 ml-2 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+                    startAutoRefresh();
+                }
+                
+                document.getElementById('ticketModal').classList.remove('hidden');
+                
+                setTimeout(() => {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }, 100);
+            } catch (error) {
+                console.error('Failed to load ticket messages:', error);
+                showToast('Failed to load ticket details', 'error');
+            }
+        }
+
+        window.viewTicket = viewTicket;
+
+        document.getElementById('createTicketForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const subject = document.getElementById('ticketSubject').value;
+            const message = document.getElementById('ticketMessage').value;
+            
+            if (!subject || !message) {
+                showToast('Please fill in all fields', 'error');
+                return;
+            }
+            
+            setLoading('createTicketBtn', 'createTicketSpinner', 'createTicketBtnText', true);
+            
+            try {
+                const response = await axios.post(`${API_BASE_URL}/create`, {
+                    subject,
+                    message
+                });
+                
+                showToast(response.data.message || 'Ticket created successfully!', 'success');
+                document.getElementById('createTicketForm').reset();
+                loadTickets();
+            } catch (error) {
+                showToast(error.response?.data?.error || 'Failed to create ticket', 'error');
+            } finally {
+                setLoading('createTicketBtn', 'createTicketSpinner', 'createTicketBtnText', false);
+            }
+        });
+
+        document.getElementById('replyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const message = document.getElementById('replyMessage').value;
+            
+            if (!message || !currentTicketId) {
+                showToast('Please enter a message', 'error');
+                return;
+            }
+            
+            const replyBtn = document.getElementById('replyBtn');
+            if (replyBtn.disabled) {
+                showToast('Cannot reply to a closed ticket', 'error');
+                return;
+            }
+            
+            setLoading('replyBtn', 'replySpinner', 'replyBtnText', true);
+            
+            try {
+                const response = await axios.post(`${API_BASE_URL}/${currentTicketId}/reply`, {
+                    message
+                });
+                
+                showToast(response.data.message || 'Reply sent successfully!', 'success');
+                document.getElementById('replyMessage').value = '';
+                await viewTicket(currentTicketId);
+                loadTickets();
+            } catch (error) {
+                showToast(error.response?.data?.error || 'Failed to send reply', 'error');
+            } finally {
+                setLoading('replyBtn', 'replySpinner', 'replyBtnText', false);
+            }
+        });
+
+        document.getElementById('closeTicketModal').addEventListener('click', () => {
+            document.getElementById('ticketModal').classList.add('hidden');
+            stopAutoRefresh();
+            currentTicketId = null;
+            lastMessageCount = 0;
+        });
+
+        document.getElementById('userMenuButton').addEventListener('click', () => {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('hidden');
+        });
+
+        document.getElementById('mobileMenuButton').addEventListener('click', () => {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            const userMenu = document.getElementById('userMenuButton');
+            const dropdown = document.getElementById('userDropdown');
+            if (!userMenu.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('logoutButton').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '../auth/login.html';
+        });
+
+        loadUserProfile();
+        loadTickets();
+    </script>
+</body>
+</html>

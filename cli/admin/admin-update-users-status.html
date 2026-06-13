@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Amana Credits Union Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a',
+                        secondary: '#3b82f6',
+                        accent: '#60a5fa',
+                        dark: '#0f172a',
+                        light: '#f8fafc',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 space-y-3 z-50"></div>
+
+    <!-- Admin Navigation -->
+    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <h1 class="text-xl sm:text-2xl font-bold text-primary dark:text-blue-400">Amana Admin</h1>
+                    <div class="hidden md:flex space-x-1">
+                        <a href="admin-dashboard.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Dashboard</a>
+                        <a href="user-management.html" class="px-4 py-2 text-white bg-primary dark:bg-blue-600 rounded-lg font-medium transition-colors">Users</a>
+                        <a href="transfer-management.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Transfers</a>
+                        <a href="atm-management.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">ATM</a>
+                        <a href="simulate-transactions.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Simulate</a>
+                        <a href="admin-wallets.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Wallets</a>
+                        <a href="admin-tickets.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Tickets</a>
+                        <a href="admin-deposits.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Deposits</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <!-- Dark/Light Mode Toggle -->
+                    <button id="themeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <svg id="sunIcon" class="w-5 h-5 text-gray-700 dark:text-gray-300 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        <svg id="moonIcon" class="w-5 h-5 text-gray-700 dark:text-gray-300 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100" id="adminName">Admin User</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
+                    </div>
+                    <button id="logoutButton" class="hidden sm:block px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors text-sm">
+                        Logout
+                    </button>
+                    <!-- Mobile Menu Button -->
+                    <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <div class="px-4 py-3 space-y-2">
+                <a href="admin-dashboard.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Dashboard</a>
+                <a href="user-management.html" class="block px-4 py-2 text-white bg-primary dark:bg-blue-600 rounded-lg font-medium">Users</a>
+                <a href="transfer-management.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Transfers</a>
+                <a href="atm-management.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">ATM</a>
+                <a href="simulate-transactions.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Simulate</a>
+                <a href="admin-wallets.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Wallets</a>
+                <a href="admin-tickets.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Tickets</a>
+                <a href="admin-deposits.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Deposits</a>
+                <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <p class="px-4 py-1 text-sm font-medium text-gray-900 dark:text-gray-100" id="adminNameMobile">Admin User</p>
+                    <button id="logoutButtonMobile" class="w-full mt-2 px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors text-sm">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Header + Filters -->
+        <section class="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">User Management</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    View users, search, and update account status (active, hold, blocked, suspended, pending, inactive).
+                </p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                <!-- Search -->
+                <div class="relative">
+                    <input
+                        id="searchInput"
+                        type="text"
+                        placeholder="Search name, email, account..."
+                        class="w-full sm:w-64 pl-9 pr-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary/60 focus:border-primary outline-none"
+                    />
+                    <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15z"></path>
+                    </svg>
+                </div>
+
+                <!-- Status Filter -->
+                <select
+                    id="statusFilter"
+                    class="w-full sm:w-44 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary/60 focus:border-primary outline-none"
+                >
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="hold">On Hold</option>
+                    <option value="pending">Pending</option>
+                    <option value="suspended">Suspended</option>
+                    <option value="blocked">Blocked</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+
+                <!-- Refresh -->
+                <button
+                    id="refreshBtn"
+                    class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M5 19a9 9 0 0114-7.5M19 5a9 9 0 00-14 7.5"></path>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+        </section>
+
+        <!-- Table Card -->
+        <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <!-- Table header info -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-3 border-b border-gray-100 dark:border-gray-700 gap-2">
+                <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <span id="totalCountLabel">Total: 0 users</span>
+                    <span class="hidden sm:inline-block">•</span>
+                    <span id="pageInfoLabel" class="hidden sm:inline-block">Page 1 of 1</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs text-gray-500 dark:text-gray-400" for="pageSizeSelect">Rows per page:</label>
+                    <select
+                        id="pageSizeSelect"
+                        class="px-2 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-1 focus:ring-primary/60 focus:border-primary"
+                    >
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Table wrapper -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                    <thead class="bg-gray-50 dark:bg-gray-900/40">
+                        <tr>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Accounts</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Balances</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                            <th class="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty state / loader -->
+            <div id="tableEmptyState" class="hidden px-4 sm:px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+                <svg class="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H9.414a2 2 0 00-1.414.586L5 6.586A2 2 0 004.414 8H4a2 2 0 00-2 2v9a2 2 0 002 2z"></path>
+                </svg>
+                <p class="text-sm">No users found. Adjust your filters or try again.</p>
+            </div>
+
+            <div id="tableLoadingState" class="px-4 sm:px-6 py-6 text-center text-gray-500 dark:text-gray-400">
+                <div class="flex justify-center mb-2">
+                    <svg class="w-6 h-6 text-primary dark:text-blue-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-30" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                </div>
+                <p class="text-sm">Loading users...</p>
+            </div>
+
+            <!-- Pagination -->
+            <div class="flex items-center justify-between px-4 sm:px-6 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/40">
+                <p id="pageInfoLabelBottom" class="text-xs text-gray-500 dark:text-gray-400">
+                    Showing 0–0 of 0
+                </p>
+                <div class="flex items-center space-x-2">
+                    <button
+                        id="prevPageBtn"
+                        class="px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        Previous
+                    </button>
+                    <button
+                        id="nextPageBtn"
+                        class="px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        Next
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Legend -->
+        <section class="mt-6 text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-3 items-center">
+            <span class="font-semibold uppercase tracking-wide text-[10px] text-gray-400 dark:text-gray-500">Status Legend:</span>
+            <span class="inline-flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Active
+            </span>
+            <span class="inline-flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span> On Hold
+            </span>
+            <span class="inline-flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-sky-500"></span> Pending
+            </span>
+            <span class="inline-flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-orange-500"></span> Suspended
+            </span>
+            <span class="inline-flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span> Blocked
+            </span>
+            <span class="inline-flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-zinc-500"></span> Inactive
+            </span>
+        </section>
+    </main>
+
+    <script>
+        const API_BASE_URL = window.getApiBaseUrl("admin");
+
+        let currentPage = 1;
+        let totalPages = 1;
+        let totalUsers = 0;
+        let pageSize = 20;
+        let isLoading = false;
+
+        // THEME
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // AUTH
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+            if (!token || ((!user.role || user.role !== 'admin') && !user.is_admin)) {
+                window.location.href = '../auth/login.html';
+                return false;
+            }
+
+            const adminName = user.full_name || user.name || 'Admin User';
+            document.getElementById('adminName').textContent = adminName;
+            document.getElementById('adminNameMobile').textContent = adminName;
+
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            return true;
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '../auth/login.html';
+        }
+
+        document.getElementById('logoutButton').addEventListener('click', handleLogout);
+        document.getElementById('logoutButtonMobile').addEventListener('click', handleLogout);
+
+        // TOASTS
+        function showToast(type, message) {
+            const container = document.getElementById('toastContainer');
+            const id = 'toast-' + Date.now();
+
+            const baseClasses = 'max-w-sm w-full rounded-lg shadow-lg px-4 py-3 text-sm flex items-start gap-3 border';
+            let colorClasses = '';
+            let iconPath = '';
+
+            if (type === 'success') {
+                colorClasses = 'bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-100';
+                iconPath = 'M5 13l4 4L19 7';
+            } else if (type === 'error') {
+                colorClasses = 'bg-rose-50 border-rose-200 text-rose-900 dark:bg-rose-900/20 dark:border-rose-700 dark:text-rose-100';
+                iconPath = 'M6 18L18 6M6 6l12 12';
+            } else {
+                colorClasses = 'bg-sky-50 border-sky-200 text-sky-900 dark:bg-sky-900/20 dark:border-sky-700 dark:text-sky-100';
+                iconPath = 'M13 16h-1v-4h-1m1-4h.01';
+            }
+
+            const toast = document.createElement('div');
+            toast.id = id;
+            toast.className = `${baseClasses} ${colorClasses}`;
+            toast.innerHTML = `
+                <div class="mt-0.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconPath}"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">${message}</div>
+                <button class="ml-2 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" onclick="document.getElementById('${id}')?.remove()">
+                    ✕
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                const el = document.getElementById(id);
+                if (el) el.remove();
+            }, 4500);
+        }
+
+        // STATUS BADGE
+        function getStatusBadge(statusRaw) {
+            const status = (statusRaw || '').toLowerCase();
+            let label = status || 'unknown';
+            let classes = 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700';
+
+            if (status === 'active') {
+                label = 'Active';
+                classes = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-100 border border-emerald-200/60 dark:border-emerald-700/60';
+            } else if (status === 'hold') {
+                label = 'On Hold';
+                classes = 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-100 border border-amber-200/60 dark:border-amber-700/60';
+            } else if (status === 'pending') {
+                label = 'Pending';
+                classes = 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-100 border border-sky-200/60 dark:border-sky-700/60';
+            } else if (status === 'suspended') {
+                label = 'Suspended';
+                classes = 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-100 border border-orange-200/60 dark:border-orange-700/60';
+            } else if (status === 'blocked') {
+                label = 'Blocked';
+                classes = 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-100 border border-rose-200/60 dark:border-rose-700/60';
+            } else if (status === 'inactive') {
+                label = 'Inactive';
+                classes = 'bg-zinc-50 text-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-100 border border-zinc-200/60 dark:border-zinc-700/60';
+            }
+
+            return `
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium ${classes}">
+                    <span class="w-1.5 h-1.5 rounded-full mr-1.5
+                        ${status === 'active' ? 'bg-emerald-500' :
+                          status === 'hold' ? 'bg-amber-500' :
+                          status === 'pending' ? 'bg-sky-500' :
+                          status === 'suspended' ? 'bg-orange-500' :
+                          status === 'blocked' ? 'bg-rose-500' :
+                          status === 'inactive' ? 'bg-zinc-500' : 'bg-gray-400'}"></span>
+                    ${label}
+                </span>
+            `;
+        }
+
+        // FORMAT MONEY
+        function formatMoney(value, currencySign) {
+            const num = parseFloat(value || 0);
+            if (Number.isNaN(num)) return `${currencySign}0.00`;
+            return `${currencySign}${num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+        }
+
+        // LOAD USERS
+        async function loadUsers(page = 1) {
+            if (isLoading) return;
+            isLoading = true;
+            currentPage = page;
+
+            const q = document.getElementById('searchInput').value.trim();
+            const status = document.getElementById('statusFilter').value.trim();
+            pageSize = parseInt(document.getElementById('pageSizeSelect').value || '20', 10);
+
+            const tbody = document.getElementById('usersTableBody');
+            const emptyState = document.getElementById('tableEmptyState');
+            const loadingState = document.getElementById('tableLoadingState');
+
+            tbody.innerHTML = '';
+            emptyState.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+
+            try {
+                const params = {
+                    page: currentPage,
+                    pageSize,
+                };
+                if (q) params.q = q;
+                if (status) params.status = status;
+
+                const res = await axios.get(`${API_BASE_URL}/users`, { params });
+
+                const users = res.data.users || [];
+                totalUsers = res.data.total || 0;
+                totalPages = res.data.pages || 1;
+
+                document.getElementById('totalCountLabel').textContent = `Total: ${totalUsers.toLocaleString()} users`;
+                document.getElementById('pageInfoLabel').textContent = `Page ${currentPage} of ${totalPages || 1}`;
+
+                const startIdx = totalUsers === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+                const endIdx = totalUsers === 0 ? 0 : Math.min(currentPage * pageSize, totalUsers);
+                document.getElementById('pageInfoLabelBottom').textContent = `Showing ${startIdx.toLocaleString()}–${endIdx.toLocaleString()} of ${totalUsers.toLocaleString()}`;
+
+                document.getElementById('prevPageBtn').disabled = currentPage <= 1;
+                document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
+
+                if (!users.length) {
+                    emptyState.classList.remove('hidden');
+                }
+
+                const rowsHtml = users.map(user => {
+                    const currencySign = user.currency_sign || '$';
+                    const profileImg = (user.profile_image_url || '').trim();
+                    const acctStatus = (user.acct_status || '').toLowerCase();
+
+                    const primaryAcc = user.account_number || '—';
+                    const cAcc = user.c_account_number || '—';
+                    const sAcc = user.s_account_number || '—';
+
+                    return `
+                        <tr class="hover:bg-gray-50/70 dark:hover:bg-gray-900/40 transition-colors">
+                            <td class="px-4 sm:px-6 py-3 align-top">
+                                <div class="flex items-center gap-3">
+                                    <div class="hidden sm:flex">
+                                        <div class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-gray-700">
+                                            ${profileImg
+                                                ? `<img src="${window.getApiAssetUrl(profileImg)}" class="w-full h-full object-cover" alt="Profile" />`
+                                                : `<span class="text-xs font-semibold text-gray-500 dark:text-gray-300">${(user.full_name || user.username || 'U').substring(0,2).toUpperCase()}</span>`
+                                            }
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                            ${user.full_name || user.username || '—'}
+                                        </p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 break-all">
+                                            ${user.email || '—'}
+                                        </p>
+                                        <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+                                            ID: ${user.id}
+                                        </p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 sm:px-6 py-3 align-top text-xs text-gray-700 dark:text-gray-200">
+                                <div class="space-y-1.5">
+                                    <div>
+                                        <p class="font-medium text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Primary</p>
+                                        <p class="font-mono text-[12px]">${primaryAcc}</p>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2 mt-1">
+                                        <div>
+                                            <p class="font-medium text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Current</p>
+                                            <p class="font-mono text-[12px]">${cAcc}</p>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Savings</p>
+                                            <p class="font-mono text-[12px]">${sAcc}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 sm:px-6 py-3 align-top text-xs text-gray-700 dark:text-gray-200">
+                                <div class="space-y-1.5">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Current</span>
+                                        <span class="font-semibold">${formatMoney(user.current_balance, currencySign)}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Savings</span>
+                                        <span class="font-semibold">${formatMoney(user.savings_balance, currencySign)}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Loan</span>
+                                        <span class="font-semibold">${formatMoney(user.loan_balance, currencySign)}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 sm:px-6 py-3 align-top">
+                                <div class="flex flex-col gap-2">
+                                    <div class="mb-1">
+                                        ${getStatusBadge(acctStatus)}
+                                    </div>
+                                    <select
+                                        class="status-select w-full mt-1 px-2 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-[11px] text-gray-800 dark:text-gray-100 focus:ring-1 focus:ring-primary/60 focus:border-primary outline-none"
+                                        data-user-id="${user.id}"
+                                    >
+                                        <option value="active" ${acctStatus === 'active' ? 'selected' : ''}>Active</option>
+                                        <option value="hold" ${acctStatus === 'hold' ? 'selected' : ''}>On Hold</option>
+                                        <option value="pending" ${acctStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                                        <option value="suspended" ${acctStatus === 'suspended' ? 'selected' : ''}>Suspended</option>
+                                        <option value="blocked" ${acctStatus === 'blocked' ? 'selected' : ''}>Blocked</option>
+                                        <option value="inactive" ${acctStatus === 'inactive' ? 'selected' : ''}>Inactive</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td class="px-4 sm:px-6 py-3 align-top text-right">
+                                <div class="flex flex-col items-end gap-1 text-[11px] text-gray-400 dark:text-gray-500">
+                                    <button
+                                        class="inline-flex items-center px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                                        onclick="openUserDetail(${user.id})"
+                                    >
+                                        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        </svg>
+                                        View
+                                    </button>
+                                    <span>User ID: ${user.id}</span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                tbody.innerHTML = rowsHtml;
+                attachStatusListeners();
+            } catch (err) {
+                console.error('Error loading users:', err);
+                showToast('error', 'Failed to load users. Please try again.');
+                document.getElementById('pageInfoLabelBottom').textContent = 'Error loading data.';
+            } finally {
+                isLoading = false;
+                loadingState.classList.add('hidden');
+            }
+        }
+
+        // Attach change event to status selects
+        function attachStatusListeners() {
+            document.querySelectorAll('.status-select').forEach(select => {
+                select.addEventListener('change', async (e) => {
+                    const newStatus = e.target.value;
+                    const userId = e.target.getAttribute('data-user-id');
+
+                    const confirmMsg = `Change this user's account status to "${newStatus}"?`;
+                    if (!confirm(confirmMsg)) {
+                        // revert selection by reloading users
+                        loadUsers(currentPage);
+                        return;
+                    }
+
+                    try {
+                        await axios.patch(`${API_BASE_URL}/users/${userId}/status`, { acct_status: newStatus });
+                        showToast('success', `Status updated to "${newStatus}" for user #${userId}`);
+                        // refresh current page to update badge/status
+                        loadUsers(currentPage);
+                    } catch (err) {
+                        console.error('Error updating status:', err);
+                        showToast('error', 'Failed to update status. Check connection or try again.');
+                        // revert selection
+                        loadUsers(currentPage);
+                    }
+                });
+            });
+        }
+
+        // Simple placeholder for "View" action (you can hook to another page later)
+        function openUserDetail(userId) {
+            alert('User details page not implemented yet. (User ID: ' + userId + ')');
+        }
+
+        // EVENTS
+        document.getElementById('searchInput').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                loadUsers(1);
+            }
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', () => {
+            loadUsers(1);
+        });
+
+        document.getElementById('pageSizeSelect').addEventListener('change', () => {
+            loadUsers(1);
+        });
+
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            loadUsers(currentPage);
+        });
+
+        document.getElementById('prevPageBtn').addEventListener('click', () => {
+            if (currentPage > 1) {
+                loadUsers(currentPage - 1);
+            }
+        });
+
+        document.getElementById('nextPageBtn').addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                loadUsers(currentPage + 1);
+            }
+        });
+
+        // INIT
+        if (checkAuth()) {
+            initTheme();
+            loadUsers(1);
+        }
+    </script>
+</body>
+</html>

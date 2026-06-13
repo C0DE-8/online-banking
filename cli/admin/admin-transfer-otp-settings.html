@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transfer OTP Settings - SecureBank Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#1e3a8a",
+            secondary: "#3b82f6",
+            accent: "#60a5fa",
+            dark: "#0f172a",
+            light: "#f8fafc",
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* subtle shimmer */
+    @keyframes shimmer { 0%{background-position:-1000px 0} 100%{background-position:1000px 0} }
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.06) 75%);
+      background-size: 1000px 100%;
+      animation: shimmer 1.8s infinite;
+      border-radius: 10px;
+    }
+
+    /* modal pop */
+    @keyframes popIn { 0% { transform: scale(0.96); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .pop-in { animation: popIn 160ms ease-out; }
+  </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+
+  <!-- NAV -->
+  <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center space-x-4 sm:space-x-8">
+          <h1 class="text-lg sm:text-2xl font-bold text-primary dark:text-blue-400">SecureBank Admin</h1>
+
+          <div class="hidden md:flex space-x-1">
+            <a href="admin-dashboard.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Dashboard</a>
+            <a href="transfer-management.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Transfers</a>
+            <a href="admin-transfer-otp-settings.html" class="px-4 py-2 text-white bg-primary dark:bg-blue-600 rounded-lg font-medium transition-colors">Transfer OTP</a>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 sm:space-x-4">
+          <button id="themeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" aria-label="Toggle theme">
+            <svg id="sunIcon" class="w-5 h-5 text-gray-700 dark:text-gray-300 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <svg id="moonIcon" class="w-5 h-5 text-gray-700 dark:text-gray-300 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          </button>
+
+          <div class="text-right hidden sm:block">
+            <p class="text-sm font-medium text-gray-900 dark:text-gray-100" id="adminName">Admin</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
+          </div>
+
+          <button id="logoutButton" class="hidden sm:block px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors text-sm">
+            Logout
+          </button>
+
+          <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" aria-label="Open menu">
+            <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOBILE MENU -->
+    <div id="mobileMenu" class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div class="px-4 py-3 space-y-2">
+        <a href="admin-dashboard.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Dashboard</a>
+        <a href="transfer-management.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Transfers</a>
+        <a href="admin-transfer-otp-settings.html" class="block px-4 py-2 text-white bg-primary dark:bg-blue-600 rounded-lg font-medium">Transfer OTP</a>
+        <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
+          <p class="px-4 py-1 text-sm font-medium text-gray-900 dark:text-gray-100" id="adminNameMobile">Admin</p>
+          <button id="logoutButtonMobile" class="w-full mt-2 px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors text-sm">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Transfer OTP Settings</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">Turn OTP on/off for Local and Wire transfers.</p>
+      </div>
+
+      <div class="flex gap-3">
+        <a href="transfer-management.html" class="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium">
+          Back
+        </a>
+        <button id="refreshBtn" class="px-4 py-2 rounded-lg bg-primary text-white hover:bg-blue-800 transition-colors font-medium">
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Local OTP -->
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Local Transfer OTP</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">When ON, users must verify OTP before completing a local transfer.</p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span id="localStatusPill" class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">Loading…</span>
+            <button id="localToggleBtn" class="relative inline-flex h-7 w-14 items-center rounded-full bg-gray-200 dark:bg-gray-700 transition-colors">
+              <span id="localToggleDot" class="inline-block h-6 w-6 transform rounded-full bg-white dark:bg-gray-200 transition-transform translate-x-1"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button id="localOnBtn" class="px-4 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-medium transition-colors">
+            Enable OTP
+          </button>
+          <button id="localOffBtn" class="px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-medium transition-colors">
+            Disable OTP
+          </button>
+        </div>
+
+        <div class="mt-5 p-4 rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700">
+          <p class="text-sm text-gray-700 dark:text-gray-200">
+            Setting key: <span class="font-mono text-xs">local_transfer_otp_enabled</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Wire OTP -->
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Wire Transfer OTP</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">When ON, users must verify OTP before completing a wire transfer.</p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span id="wireStatusPill" class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">Loading…</span>
+            <button id="wireToggleBtn" class="relative inline-flex h-7 w-14 items-center rounded-full bg-gray-200 dark:bg-gray-700 transition-colors">
+              <span id="wireToggleDot" class="inline-block h-6 w-6 transform rounded-full bg-white dark:bg-gray-200 transition-transform translate-x-1"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button id="wireOnBtn" class="px-4 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-medium transition-colors">
+            Enable OTP
+          </button>
+          <button id="wireOffBtn" class="px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-medium transition-colors">
+            Disable OTP
+          </button>
+        </div>
+
+        <div class="mt-5 p-4 rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700">
+          <p class="text-sm text-gray-700 dark:text-gray-200">
+            Setting key: <span class="font-mono text-xs">wire_transfer_otp_enabled</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MESSAGE MODAL (module) -->
+  <div id="messageModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[120] flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 pop-in border border-gray-100 dark:border-gray-700">
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <div class="flex items-center gap-3">
+          <div id="mmIconWrap" class="w-10 h-10 rounded-full flex items-center justify-center bg-red-50 border border-red-200">
+            <svg id="mmIcon" class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 id="mmTitle" class="text-lg font-bold text-gray-900 dark:text-gray-100">Error</h3>
+            <p id="mmSubtitle" class="text-xs text-gray-500 dark:text-gray-400">Please review and try again.</p>
+          </div>
+        </div>
+        <button id="closeMessageModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" aria-label="Close">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl p-4">
+        <p id="mmMessage" class="text-sm text-gray-800 dark:text-gray-100 leading-relaxed">—</p>
+      </div>
+
+      <div class="mt-5 flex gap-3">
+        <button id="mmPrimaryBtn" class="flex-1 bg-primary text-white py-3 rounded-lg hover:bg-blue-800 transition-colors font-medium shadow-lg">
+          Okay
+        </button>
+        <button id="mmSecondaryBtn" class="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium hidden">
+          Secondary
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================
+    // CONFIG
+    // =========================
+    const API_BASE_URL = window.getApiBaseUrl("admin");
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem("theme") || "dark";
+      if (savedTheme === "dark") document.documentElement.classList.add("dark");
+      else document.documentElement.classList.remove("dark");
+    }
+
+    // =========================
+    // AUTH
+    // =========================
+    function checkAuth() {
+      const token = localStorage.getItem("token");
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+      if (!token || (((!user.role || user.role !== "admin") && !user.is_admin))) {
+        window.location.href = "../auth/login.html";
+        return false;
+      }
+
+      document.getElementById("adminName").textContent = user.full_name || user.name || "Admin";
+      document.getElementById("adminNameMobile").textContent = user.full_name || user.name || "Admin";
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      return true;
+    }
+
+    function handleLogout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "../auth/login.html";
+    }
+
+    // =========================
+    // MESSAGE MODAL
+    // =========================
+    const messageModal = document.getElementById("messageModal");
+    const mmTitle = document.getElementById("mmTitle");
+    const mmSubtitle = document.getElementById("mmSubtitle");
+    const mmMessage = document.getElementById("mmMessage");
+    const mmPrimaryBtn = document.getElementById("mmPrimaryBtn");
+    const mmSecondaryBtn = document.getElementById("mmSecondaryBtn");
+    const mmIconWrap = document.getElementById("mmIconWrap");
+    const mmIcon = document.getElementById("mmIcon");
+
+    function openMessageModal({
+      title = "Error",
+      subtitle = "Please review and try again.",
+      message = "Something went wrong.",
+      type = "error",
+      primaryText = "Okay",
+      onPrimary = null,
+      secondaryText = "",
+      onSecondary = null,
+    } = {}) {
+      mmTitle.textContent = title;
+      mmSubtitle.textContent = subtitle;
+      mmMessage.textContent = String(message || "").trim() || "Something went wrong.";
+
+      if (type === "success") {
+        mmIconWrap.className = "w-10 h-10 rounded-full flex items-center justify-center bg-green-50 border border-green-200";
+        mmIcon.className = "w-5 h-5 text-green-600";
+        mmIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+      } else if (type === "info") {
+        mmIconWrap.className = "w-10 h-10 rounded-full flex items-center justify-center bg-blue-50 border border-blue-200";
+        mmIcon.className = "w-5 h-5 text-blue-600";
+        mmIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+      } else {
+        mmIconWrap.className = "w-10 h-10 rounded-full flex items-center justify-center bg-red-50 border border-red-200";
+        mmIcon.className = "w-5 h-5 text-red-600";
+        mmIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+      }
+
+      mmPrimaryBtn.textContent = primaryText;
+      mmPrimaryBtn.onclick = () => { closeMessageModal(); if (typeof onPrimary === "function") onPrimary(); };
+
+      if (secondaryText) {
+        mmSecondaryBtn.classList.remove("hidden");
+        mmSecondaryBtn.textContent = secondaryText;
+        mmSecondaryBtn.onclick = () => { closeMessageModal(); if (typeof onSecondary === "function") onSecondary(); };
+      } else {
+        mmSecondaryBtn.classList.add("hidden");
+        mmSecondaryBtn.onclick = null;
+      }
+
+      messageModal.classList.remove("hidden");
+    }
+
+    function closeMessageModal() { messageModal.classList.add("hidden"); }
+    document.getElementById("closeMessageModal").addEventListener("click", closeMessageModal);
+    messageModal.addEventListener("click", (e) => { if (e.target === messageModal) closeMessageModal(); });
+
+    function apiErrMsg(err, fallback) {
+      const m = err?.response?.data?.error || err?.response?.data?.message || err?.response?.data?.details;
+      return String(m || err?.message || fallback || "Request failed");
+    }
+
+    // =========================
+    // TOGGLE UI
+    // =========================
+    function setToggleUI(kind, enabled) {
+      const pill = document.getElementById(kind + "StatusPill");
+      const btn = document.getElementById(kind + "ToggleBtn");
+      const dot = document.getElementById(kind + "ToggleDot");
+
+      if (!pill || !btn || !dot) return;
+
+      if (enabled) {
+        pill.textContent = "Enabled";
+        pill.className = "px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300";
+        btn.className = "relative inline-flex h-7 w-14 items-center rounded-full bg-green-500 transition-colors";
+        dot.className = "inline-block h-6 w-6 transform rounded-full bg-white transition-transform translate-x-7";
+      } else {
+        pill.textContent = "Disabled";
+        pill.className = "px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200";
+        btn.className = "relative inline-flex h-7 w-14 items-center rounded-full bg-gray-200 dark:bg-gray-700 transition-colors";
+        dot.className = "inline-block h-6 w-6 transform rounded-full bg-white dark:bg-gray-200 transition-transform translate-x-1";
+      }
+    }
+
+    // =========================
+    // API CALLS
+    // =========================
+    async function getLocalOtpStatus() {
+      const r = await axios.get(`${API_BASE_URL}/settings/otp/local-transfer`);
+      return !!r.data?.enabled;
+    }
+    async function setLocalOtpStatus(enabled) {
+      const r = await axios.put(`${API_BASE_URL}/settings/otp/local-transfer`, { enabled: !!enabled });
+      return !!r.data?.enabled;
+    }
+
+    async function getWireOtpStatus() {
+      const r = await axios.get(`${API_BASE_URL}/settings/wire-transfer-otp`);
+      return !!r.data?.enabled;
+    }
+    async function setWireOtpStatus(enabled) {
+      const r = await axios.put(`${API_BASE_URL}/settings/wire-transfer-otp`, { enabled: !!enabled });
+      // your route returns { value: 1/0 } not enabled, so normalize:
+      const v = r.data?.enabled !== undefined ? r.data.enabled : (Number(r.data?.value) === 1);
+      return !!v;
+    }
+
+    async function refreshAll() {
+      // show loading pills
+      document.getElementById("localStatusPill").textContent = "Loading…";
+      document.getElementById("wireStatusPill").textContent = "Loading…";
+
+      try {
+        const [localEnabled, wireEnabled] = await Promise.all([
+          getLocalOtpStatus(),
+          getWireOtpStatus(),
+        ]);
+
+        setToggleUI("local", localEnabled);
+        setToggleUI("wire", wireEnabled);
+      } catch (e) {
+        openMessageModal({
+          type: "error",
+          title: "Failed to Load Settings",
+          subtitle: "We couldn’t fetch OTP settings.",
+          message: apiErrMsg(e, "Please check your server and try again."),
+        });
+      }
+    }
+
+    // =========================
+    // EVENTS
+    // =========================
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      document.documentElement.classList.toggle("dark");
+      const isDark = document.documentElement.classList.contains("dark");
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+    });
+
+    document.getElementById("mobileMenuBtn").addEventListener("click", () => {
+      document.getElementById("mobileMenu").classList.toggle("hidden");
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", handleLogout);
+    document.getElementById("logoutButtonMobile").addEventListener("click", handleLogout);
+
+    document.getElementById("refreshBtn").addEventListener("click", refreshAll);
+
+    // toggle click shortcuts
+    document.getElementById("localToggleBtn").addEventListener("click", async () => {
+      try {
+        const current = document.getElementById("localStatusPill").textContent === "Enabled";
+        const next = !current;
+        setToggleUI("local", next);
+        const saved = await setLocalOtpStatus(next);
+        setToggleUI("local", saved);
+
+        openMessageModal({
+          type: "success",
+          title: "Updated",
+          subtitle: "Local Transfer OTP setting saved.",
+          message: `Local Transfer OTP is now ${saved ? "ENABLED" : "DISABLED"}.`,
+        });
+      } catch (e) {
+        openMessageModal({ type: "error", title: "Update Failed", message: apiErrMsg(e, "Failed to update local OTP") });
+        refreshAll();
+      }
+    });
+
+    document.getElementById("wireToggleBtn").addEventListener("click", async () => {
+      try {
+        const current = document.getElementById("wireStatusPill").textContent === "Enabled";
+        const next = !current;
+        setToggleUI("wire", next);
+        const saved = await setWireOtpStatus(next);
+        setToggleUI("wire", saved);
+
+        openMessageModal({
+          type: "success",
+          title: "Updated",
+          subtitle: "Wire Transfer OTP setting saved.",
+          message: `Wire Transfer OTP is now ${saved ? "ENABLED" : "DISABLED"}.`,
+        });
+      } catch (e) {
+        openMessageModal({ type: "error", title: "Update Failed", message: apiErrMsg(e, "Failed to update wire OTP") });
+        refreshAll();
+      }
+    });
+
+    // explicit buttons
+    document.getElementById("localOnBtn").addEventListener("click", async () => {
+      try {
+        setToggleUI("local", true);
+        const saved = await setLocalOtpStatus(true);
+        setToggleUI("local", saved);
+        openMessageModal({ type: "success", title: "Updated", message: "Local Transfer OTP enabled." });
+      } catch (e) {
+        openMessageModal({ type: "error", title: "Update Failed", message: apiErrMsg(e, "Failed to enable local OTP") });
+        refreshAll();
+      }
+    });
+
+    document.getElementById("localOffBtn").addEventListener("click", async () => {
+      try {
+        setToggleUI("local", false);
+        const saved = await setLocalOtpStatus(false);
+        setToggleUI("local", saved);
+        openMessageModal({ type: "success", title: "Updated", message: "Local Transfer OTP disabled." });
+      } catch (e) {
+        openMessageModal({ type: "error", title: "Update Failed", message: apiErrMsg(e, "Failed to disable local OTP") });
+        refreshAll();
+      }
+    });
+
+    document.getElementById("wireOnBtn").addEventListener("click", async () => {
+      try {
+        setToggleUI("wire", true);
+        const saved = await setWireOtpStatus(true);
+        setToggleUI("wire", saved);
+        openMessageModal({ type: "success", title: "Updated", message: "Wire Transfer OTP enabled." });
+      } catch (e) {
+        openMessageModal({ type: "error", title: "Update Failed", message: apiErrMsg(e, "Failed to enable wire OTP") });
+        refreshAll();
+      }
+    });
+
+    document.getElementById("wireOffBtn").addEventListener("click", async () => {
+      try {
+        setToggleUI("wire", false);
+        const saved = await setWireOtpStatus(false);
+        setToggleUI("wire", saved);
+        openMessageModal({ type: "success", title: "Updated", message: "Wire Transfer OTP disabled." });
+      } catch (e) {
+        openMessageModal({ type: "error", title: "Update Failed", message: apiErrMsg(e, "Failed to disable wire OTP") });
+        refreshAll();
+      }
+    });
+
+    // =========================
+    // INIT
+    // =========================
+    initTheme();
+    if (checkAuth()) {
+      refreshAll();
+    }
+  </script>
+</body>
+</html>

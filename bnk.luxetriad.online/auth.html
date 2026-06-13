@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Bank — Loading…</title>
+  <meta name="theme-color" content="#0b1220"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{
+      /* use your brand here; matches your gradient + glass preference */
+      --brand-start:#a855f7; /* fuchsia-500 */
+      --brand-end:#6366f1;   /* indigo-500 */
+    }
+    .orb{ filter: blur(80px); opacity:.35; animation: float 18s ease-in-out infinite; }
+    .orb:nth-child(2){ animation-delay: -9s; }
+    @keyframes float{
+      0%,100%{ transform: translate(0,0) scale(1) }
+      33%{ transform: translate(40px,-30px) scale(1.05) }
+      66%{ transform: translate(-30px,30px) scale(1.08) }
+    }
+    .glass{
+      background: radial-gradient(120% 120% at 10% 0%, rgba(255,255,255,.16), rgba(255,255,255,.06) 50%, rgba(255,255,255,.04) 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#0b1220] text-slate-100 relative overflow-hidden">
+
+  <!-- dreamy gradient + orbs -->
+  <div class="pointer-events-none absolute inset-0">
+    <div class="absolute -top-24 -left-24 w-[420px] h-[420px] rounded-full orb" style="background:radial-gradient(closest-side, var(--brand-start), transparent)"></div>
+    <div class="absolute -bottom-24 -right-24 w-[420px] h-[420px] rounded-full orb" style="background:radial-gradient(closest-side, var(--brand-end), transparent)"></div>
+
+    <!-- soft diagonal gradient wash -->
+    <div class="absolute inset-0 bg-gradient-to-br from-[rgba(168,85,247,.08)] via-[rgba(99,102,241,.06)] to-transparent"></div>
+  </div>
+
+  <!-- CENTER: glass preloader card -->
+  <main class="relative z-10 min-h-screen grid place-items-center p-6">
+    <section class="glass w-full max-w-lg rounded-3xl p-8 shadow-2xl">
+      <!-- brand row -->
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-11 h-11 rounded-2xl grid place-items-center text-white font-extrabold"
+             style="background:linear-gradient(135deg,var(--brand-start),var(--brand-end))">B</div>
+        <div class="leading-tight">
+          <h1 class="text-xl font-extrabold tracking-tight">Bank</h1>
+          <p class="text-xs text-slate-300/90">Secure Access Gateway</p>
+        </div>
+      </div>
+
+      <!-- lock + status -->
+      <div class="flex items-center gap-3 text-slate-200/90 mb-4">
+        <svg class="w-5 h-5 mr-1 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity=".25" stroke-width="4"></circle>
+          <path d="M21 12a9 9 0 0 1-9 9" stroke="currentColor" stroke-width="4"></path>
+        </svg>
+        <span id="status" class="text-sm">Initializing secure session…</span>
+      </div>
+
+      <!-- progress container -->
+      <div class="mb-2">
+        <div class="h-2.5 w-full rounded-full bg-white/10 overflow-hidden">
+          <div id="bar" class="h-full w-0 rounded-full"
+               style="background:linear-gradient(90deg,var(--brand-start),var(--brand-end))"></div>
+        </div>
+      </div>
+      <div class="flex items-center justify-between text-xs text-slate-300/80 mb-6">
+        <span>Progress</span>
+        <span id="pct">0%</span>
+      </div>
+
+      <!-- check list -->
+      <ul class="space-y-2 text-sm">
+        <li class="flex items-center gap-2">
+          <span id="check-1" class="inline-flex w-5 h-5 rounded-full border border-white/20"></span>
+          Connecting to bank network
+        </li>
+        <li class="flex items-center gap-2">
+          <span id="check-2" class="inline-flex w-5 h-5 rounded-full border border-white/20"></span>
+          Verifying device integrity
+        </li>
+        <li class="flex items-center gap-2">
+          <span id="check-3" class="inline-flex w-5 h-5 rounded-full border border-white/20"></span>
+          Negotiating TLS 1.3
+        </li>
+        <li class="flex items-center gap-2">
+          <span id="check-4" class="inline-flex w-5 h-5 rounded-full border border-white/20"></span>
+          Preparing login session
+        </li>
+      </ul>
+
+      <!-- fallback link -->
+      <div class="mt-8 text-xs text-slate-400">
+        Having trouble? <a href="./auth/login.html" class="text-sky-300 hover:underline">Continue to login</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- subtle footer -->
+  <footer class="absolute bottom-0 inset-x-0 p-4 text-center text-[11px] text-slate-400/80">
+    © <span id="y"></span> Bank. All rights reserved.
+  </footer>
+
+  <script>
+    // year
+    document.getElementById('y').textContent = new Date().getFullYear();
+
+    // elements
+    const bar   = document.getElementById('bar');
+    const pct   = document.getElementById('pct');
+    const status= document.getElementById('status');
+    const steps = [
+      { el: document.getElementById('check-1'), at: 15,  text: 'Connecting to bank network…' },
+      { el: document.getElementById('check-2'), at: 38,  text: 'Verifying device integrity…' },
+      { el: document.getElementById('check-3'), at: 62,  text: 'Negotiating TLS 1.3…' },
+      { el: document.getElementById('check-4'), at: 85,  text: 'Preparing login session…' },
+    ];
+
+    // helper to mark a step done
+    function mark(el){
+      el.className = 'inline-flex w-5 h-5 rounded-full border border-emerald-400/30 bg-emerald-400/20 relative';
+      el.innerHTML = '<svg viewBox="0 0 24 24" class="absolute inset-0 m-auto w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>';
+    }
+
+    // progress engine: non-linear ticks for realism
+    const targetUrl = './auth/login.html'; // routing convention you use
+    let p = 0;
+    let tick = 0;
+
+    const timer = setInterval(() => {
+      // ease-forward increments
+      const base = 1 + Math.random() * 2;      // 1–3%
+      const surge = (tick % 7 === 0) ? 3 : 0;  // occasional surge
+      const slow  = (p > 88) ? 0.4 : 0;        // slow near the end
+      p = Math.min(100, p + base + surge + slow);
+
+      // update UI
+      bar.style.width = p + '%';
+      pct.textContent = Math.floor(p) + '%';
+
+      // update status by thresholds
+      for (const s of steps) {
+        if (!s.done && p >= s.at) {
+          s.done = true;
+          mark(s.el);
+          status.textContent = s.text;
+        }
+      }
+      if (p >= 98) status.textContent = 'Securing redirect…';
+
+      // done -> redirect
+      if (p >= 100) {
+        clearInterval(timer);
+        // small pause so the user sees 100%
+        setTimeout(() => { window.location.href = targetUrl; }, 500);
+      }
+      tick++;
+    }, 190);
+
+    // accessibility: if user prefers reduced motion, jump faster
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      clearInterval(timer);
+      bar.style.width = '100%';
+      pct.textContent = '100%';
+      steps.forEach(s => mark(s.el));
+      status.textContent = 'Securing redirect…';
+      setTimeout(() => { window.location.href = targetUrl; }, 400);
+    }
+  </script>
+</body>
+</html>

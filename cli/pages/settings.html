@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Fconvenience bank</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a',
+                        secondary: '#3b82f6',
+                        accent: '#60a5fa',
+                        dark: '#0f172a',
+                        light: '#f8fafc',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-light min-h-screen">
+    
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-primary">Fconvenience bank</h1>
+                    <div class="hidden lg:block ml-10">
+                        <div class="flex items-baseline space-x-4">
+                            <a href="dashboard<|fim_pad|><|fim_middle|>
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a',
+                        secondary: '#3b82f6',
+                        accent: '#60a5fa',
+                        dark: '#0f172a',
+                        light: '#f8fafc',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-indigo-50 min-h-screen">
+                            <a href="self-transfer.html" class="text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors px-3 py-2 rounded-md">Self Transfer</a>
+                            <a href="transactions-history.html" class="text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors px-3 py-2 rounded-md">Transactions</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button id="userMenuButton" class="flex items-center space-x-3 hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors">
+                            <img id="profileImage" src="/icons/placeholder.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-primary hidden">
+                            <div class="hidden md:block text-left">
+                                <p id="userName" class="text-sm font-medium text-gray-900"></p>
+                                <p class="text-xs text-gray-500">View Profile</p>
+                            </div>
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="userDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
+                            <a href="settings.html" class="block px-4 py-2 text-sm text-primary font-medium bg-blue-50">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                    Settings
+                                </div>
+                            </a>
+                            <a href="transactions-history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    Statements
+                                </div>
+                            </a>
+                            <hr class="my-2">
+                            <button id="logoutButton" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                    </svg>
+                                    Logout
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    <button id="mobileMenuButton" class="lg:hidden text-gray-700 hover:text-primary">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobileMenu" class="hidden lg:hidden border-t border-gray-200 bg-white">
+            <div class="px-4 py-3 space-y-2">
+                <a href="dashboard.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Dashboard</a>
+                <a href="wire-transfer.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Wire Transfer</a>
+                <a href="local-transfer.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Local Transfer</a>
+                <a href="self-transfer.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Self Transfer</a>
+                <a href="transactions-history.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Transactions</a>
+                <a href="settings.html" class="block text-primary font-medium px-3 py-2 rounded-md bg-blue-50">Settings</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Account Settings</h2>
+            <p class="text-gray-600">Manage your account preferences and security</p>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                    <div class="text-center">
+                        <div class="relative inline-block">
+                            <img id="profileImage" src="/icons/placeholder.png" alt="Profile" class="w-32 h-32 rounded-full border-4 border-primary mx-auto mb-4 object-cover">
+                            <input type="file" id="profileImageInput" accept="image/*" class="hidden">
+                            <button id="cameraIconBtn" class="absolute bottom-4 right-0 bg-primary text-white p-2 rounded-full hover:bg-blue-900 transition-colors shadow-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <h3 id="userFullName" class="text-xl font-bold text-gray-900 mb-1"></h3>
+                        <p id="userEmail" class="text-gray-600 mb-4"></p>
+                        <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            <span id="accountStatus">Active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        Personal Information
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                            <input type="text" id="fullNameInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter your full name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                            <input type="email" id="emailInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" disabled>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                            <input type="text" id="usernameInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter your username">
+                        </div>
+                        <button id="saveProfileBtn" class="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-900 transition-colors font-medium">
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+                        </svg>
+                        ATM Card Management
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-4">Request a new ATM card or view your existing cards</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Account Type</label>
+                            <select id="cardAccountType" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="current">Current Account</option>
+                                <option value="savings">Savings Account</option>
+                            </select>
+                        </div>
+                        <button id="requestCardBtn" class="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-900 transition-colors font-medium">
+                            Request ATM Card
+                        </button>
+                        <button id="viewCardsBtn" class="w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                            View My Cards
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Added Transaction PIN Management section -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+                        </svg>
+                        Transaction PIN
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-4">Manage your 6-digit transaction PIN for secure transfers</p>
+                    
+                    <div id="pinStatusContainer" class="mb-4 p-4 bg-blue-50 rounded-lg hidden">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Current PIN</p>
+                                <p id="pinMask" class="text-lg font-mono text-gray-700 mt-1"></p>
+                            </div>
+                            <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div id="setPinSection" class="space-y-4 hidden">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">New PIN (6 digits)</label>
+                            <input type="password" id="newPinInput" maxlength="6" pattern="\d{6}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter 6-digit PIN">
+                        </div>
+                        <button id="setPinBtn" class="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-900 transition-colors font-medium">
+                            Set Transaction PIN
+                        </button>
+                    </div>
+
+                    <div id="updatePinSection" class="space-y-4 hidden">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Current PIN</label>
+                            <input type="password" id="oldPinInput" maxlength="6" pattern="\d{6}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter current PIN">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">New PIN (6 digits)</label>
+                            <input type="password" id="updateNewPinInput" maxlength="6" pattern="\d{6}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter new 6-digit PIN">
+                        </div>
+                        <button id="updatePinBtn" class="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-900 transition-colors font-medium">
+                            Update Transaction PIN
+                        </button>
+                    </div>
+
+                    <div id="pinLoadingState" class="text-center py-4">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <p class="text-sm text-gray-600 mt-2">Loading PIN status...</p>
+                    </div>
+                </div>
+
+                <!-- Added Support section -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+                        </svg>
+                        Customer Support
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-4">Need help? Contact our support team or view your support tickets</p>
+                    <a href="support.html" class="block w-full text-center bg-primary text-white py-3 rounded-lg hover:bg-blue-900 transition-colors font-medium">
+                        Go to Support Center
+                    </a>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Recent Activity
+                    </h3>
+                    <div id="activityLogsList" class="space-y-3 mb-4">
+                        <p class="text-gray-500 text-sm">Loading activity logs...</p>
+                    </div>
+                    <a href="logs.html" class="block w-full text-center bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                        View All Activity Logs
+                    </a>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 border border-red-200 shadow-sm">
+                    <h3 class="text-lg font-bold text-red-600 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        Danger Zone
+                    </h3>
+                    <p class="text-gray-600 mb-4">Once you delete your account, there is no going back. Please be certain.</p>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Manager PIN (Required)</label>
+                            <input type="password" id="managerPinInput" maxlength="6" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="Enter manager PIN">
+                            <p class="text-xs text-gray-500 mt-1">Contact support for manager PIN authorization</p>
+                        </div>
+                        <button id="deleteAccountBtn" disabled class="w-full bg-gray-300 text-gray-500 py-3 rounded-lg cursor-not-allowed font-medium">
+                            Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="cardsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white">
+                <h3 class="text-xl font-bold text-gray-900">My ATM Cards</h3>
+                <button id="closeCardsModal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="cardsContainer" class="p-6">
+                <p class="text-gray-500">Loading cards...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.getApiBaseUrl("user");
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        if (!token || !user.id) {
+            window.location.href = '../auth/login.html';
+        }
+
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        async function loadUserProfile() {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/profile`);
+                const userData = response.data.user;
+                
+                document.getElementById('userName').textContent = userData.username || 'User';
+                document.getElementById('userFullName').textContent = userData.full_name || 'User';
+                document.getElementById('userEmail').textContent = userData.email || '';
+                document.getElementById('accountStatus').textContent = userData.acct_status || 'Active';
+                
+                document.getElementById('fullNameInput').value = userData.full_name || '';
+                document.getElementById('emailInput').value = userData.email || '';
+                document.getElementById('usernameInput').value = userData.username || '';
+                
+                if (userData.profile_image_url) {
+                    const imageUrl = window.getApiAssetUrl(userData.profile_image_url);
+                    document.getElementById('profileImage').src = imageUrl;
+                    document.getElementById('profileImage').classList.remove('hidden');
+                    document.getElementById('profileImage2').src = imageUrl;
+                } else {
+                    document.getElementById('profileImage2').src = '/icons/placeholder.png';
+                }
+            } catch (error) {
+                console.error('Failed to load profile:', error);
+            }
+        }
+
+        async function loadActivityLogs() {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/logs`);
+                const logs = response.data.logs.slice(0, 5);
+                
+                const logsContainer = document.getElementById('activityLogsList');
+                if (logs.length === 0) {
+                    logsContainer.innerHTML = '<p class="text-gray-500 text-sm">No activity logs found</p>';
+                    return;
+                }
+                
+                logsContainer.innerHTML = logs.map(log => `
+                    <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div class="flex-shrink-0 w-2 h-2 bg-primary rounded-full mt-2"></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900">${log.activity_type}</p>
+                            <p class="text-xs text-gray-600">${log.description}</p>
+                            <p class="text-xs text-gray-500 mt-1">${log.formatted_time}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load activity logs:', error);
+                document.getElementById('activityLogsList').innerHTML = '<p class="text-red-500 text-sm">Failed to load activity logs</p>';
+            }
+        }
+
+        document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+            const fullName = document.getElementById('fullNameInput').value;
+            const username = document.getElementById('usernameInput').value;
+            
+            if (!fullName || !username) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            try {
+                const response = await axios.put(`${API_BASE_URL}/profile/update`, {
+                    full_name: fullName,
+                    username: username
+                });
+                alert(response.data.message);
+                loadUserProfile();
+                loadActivityLogs();
+            } catch (error) {
+                alert(error.response?.data?.error || 'Failed to update profile');
+            }
+        });
+
+        document.getElementById('cameraIconBtn').addEventListener('click', () => {
+            document.getElementById('profileImageInput').click();
+        });
+
+        document.getElementById('profileImageInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            try {
+                const response = await axios.post(`${API_BASE_URL}/profile/upload-image`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                alert(response.data.message);
+                loadUserProfile();
+                loadActivityLogs();
+            } catch (error) {
+                alert(error.response?.data?.error || 'Failed to upload image');
+            }
+        });
+
+        document.getElementById('requestCardBtn').addEventListener('click', async () => {
+            const accountType = document.getElementById('cardAccountType').value;
+            
+            if (!confirm(`Request an ATM card for your ${accountType} account? A fee will be deducted.`)) {
+                return;
+            }
+            
+            try {
+                const response = await axios.post(`${API_BASE_URL}/request-atm-card`, { account_type: accountType });
+                alert(response.data.message);
+                loadActivityLogs();
+            } catch (error) {
+                alert(error.response?.data?.error || 'Failed to request ATM card');
+            }
+        });
+
+        document.getElementById('viewCardsBtn').addEventListener('click', async () => {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/atm-card-info`);
+                const cards = response.data.cards;
+                
+                const cardsContainer = document.getElementById('cardsContainer');
+                if (cards.length === 0) {
+                    cardsContainer.innerHTML = '<p class="text-gray-500">No ATM cards found</p>';
+                } else {
+                    cardsContainer.innerHTML = cards.map((card, index) => `
+                        <div class="mb-4 p-6 rounded-xl bg-gradient-to-br from-primary to-blue-900 text-white shadow-xl">
+                            <div class="flex justify-between items-start mb-8">
+                                <div>
+                                    <p class="text-xs opacity-75 mb-1">${card.account_type.toUpperCase()} ACCOUNT</p>
+                                    <p class="text-sm font-medium">Middlesville Trusted</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                                        card.status === 'approved' ? 'bg-green-500' : 
+                                        card.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'
+                                    }">${card.status.toUpperCase()}</span>
+                                </div>
+                            </div>
+                            <div class="mb-6">
+                                <p class="text-xs opacity-75 mb-1">Card Number</p>
+                                <p class="text-xl font-mono tracking-wider">${card.card_number.replace(/(\d{4})/g, '$1 ').trim()}</p>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <p class="text-xs opacity-75 mb-1">Card Holder</p>
+                                    <p class="text-sm font-medium">${card.card_holder_name}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs opacity-75 mb-1">Expires</p>
+                                    <p class="text-sm font-medium">${card.expiry_date}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs opacity-75 mb-1">CVV</p>
+                                    <p class="text-sm font-mono">***</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                document.getElementById('cardsModal').classList.remove('hidden');
+            } catch (error) {
+                alert('Failed to load ATM cards');
+            }
+        });
+
+        document.getElementById('closeCardsModal').addEventListener('click', () => {
+            document.getElementById('cardsModal').classList.add('hidden');
+        });
+
+        async function checkPinStatus() {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/pin`);
+                const { has_pin, pin_mask } = response.data;
+                
+                document.getElementById('pinLoadingState').classList.add('hidden');
+                
+                if (has_pin) {
+                    document.getElementById('pinStatusContainer').classList.remove('hidden');
+                    document.getElementById('pinMask').textContent = pin_mask;
+                    document.getElementById('updatePinSection').classList.remove('hidden');
+                    document.getElementById('setPinSection').classList.add('hidden');
+                } else {
+                    document.getElementById('pinStatusContainer').classList.add('hidden');
+                    document.getElementById('setPinSection').classList.remove('hidden');
+                    document.getElementById('updatePinSection').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Failed to check PIN status:', error);
+                document.getElementById('pinLoadingState').innerHTML = '<p class="text-red-500 text-sm">Failed to load PIN status</p>';
+            }
+        }
+
+        document.getElementById('setPinBtn').addEventListener('click', async () => {
+            const pin = document.getElementById('newPinInput').value;
+            
+            if (!/^\d{6}$/.test(pin)) {
+                alert('PIN must be exactly 6 digits');
+                return;
+            }
+            
+            try {
+                const response = await axios.post(`${API_BASE_URL}/set-pin`, { transaction_pin: pin });
+                alert(response.data.message);
+                document.getElementById('newPinInput').value = '';
+                checkPinStatus();
+                loadActivityLogs();
+            } catch (error) {
+                alert(error.response?.data?.error || 'Failed to set PIN');
+            }
+        });
+
+        document.getElementById('updatePinBtn').addEventListener('click', async () => {
+            const oldPin = document.getElementById('oldPinInput').value;
+            const newPin = document.getElementById('updateNewPinInput').value;
+            
+            if (!/^\d{6}$/.test(oldPin) || !/^\d{6}$/.test(newPin)) {
+                alert('Both PINs must be exactly 6 digits');
+                return;
+            }
+            
+            if (oldPin === newPin) {
+                alert('New PIN must be different from current PIN');
+                return;
+            }
+            
+            try {
+                const response = await axios.post(`${API_BASE_URL}/set-pin`, { old_pin: oldPin, new_pin: newPin });
+                alert(response.data.message);
+                document.getElementById('oldPinInput').value = '';
+                document.getElementById('updateNewPinInput').value = '';
+                checkPinStatus();
+                loadActivityLogs();
+            } catch (error) {
+                alert(error.response?.data?.error || 'Failed to update PIN');
+            }
+        });
+
+        document.getElementById('managerPinInput').addEventListener('input', (e) => {
+            const pin = e.target.value;
+            const deleteBtn = document.getElementById('deleteAccountBtn');
+            
+            if (pin === '123456') {
+                deleteBtn.disabled = false;
+                deleteBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                deleteBtn.classList.add('bg-red-600', 'text-white', 'hover:bg-red-700', 'cursor-pointer');
+            } else {
+                deleteBtn.disabled = true;
+                deleteBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                deleteBtn.classList.remove('bg-red-600', 'text-white', 'hover:bg-red-700', 'cursor-pointer');
+            }
+        });
+
+        document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
+            if (!confirm('Are you absolutely sure? This action cannot be undone!')) {
+                return;
+            }
+            
+            try {
+                const response = await axios.delete(`${API_BASE_URL}/delete`);
+                alert(response.data.message);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '../auth/login.html';
+            } catch (error) {
+                alert(error.response?.data?.error || 'Failed to delete account');
+            }
+        });
+
+        document.getElementById('userMenuButton').addEventListener('click', () => {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('hidden');
+        });
+
+        document.getElementById('mobileMenuButton').addEventListener('click', () => {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            const userMenu = document.getElementById('userMenuButton');
+            const dropdown = document.getElementById('userDropdown');
+            if (!userMenu.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('logoutButton').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '../auth/login.html';
+        });
+
+        loadUserProfile();
+        loadActivityLogs();
+        checkPinStatus(); // Added call to check PIN status on page load
+    </script>
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATM Management - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+    <!-- Added mobile-responsive navigation with dark mode toggle -->
+    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm transition-colors duration-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <h1 class="text-2xl font-bold text-blue-600 dark:text-blue-400">SecureBank Admin</h1>
+                    <div class="hidden md:flex space-x-1">
+                        <a href="admin-dashboard.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Dashboard</a>
+                        <a href="user-management.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Users</a>
+                        <a href="transfer-management.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Transfers</a>
+                        <a href="atm-management.html" class="px-4 py-2 text-white bg-blue-600 dark:bg-blue-500 rounded-lg font-medium transition-colors">ATM</a>
+                        <a href="simulate-transactions.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Simulate</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                        <svg id="sunIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        <svg id="moonIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white" id="adminName">Admin User</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
+                    </div>
+                    <button id="mobileMenuBtn" class="md:hidden p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                    <button id="logoutBtn" class="hidden md:block px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobileMenu" class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <div class="px-4 py-3 space-y-2">
+                <a href="admin-dashboard.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Dashboard</a>
+                <a href="user-management.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Users</a>
+                <a href="transfer-management.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Transfers</a>
+                <a href="atm-management.html" class="block px-4 py-2 text-white bg-blue-600 dark:bg-blue-500 rounded-lg">ATM</a>
+                <a href="simulate-transactions.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Simulate</a>
+                <button id="mobileLogoutBtn" class="w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Added ATM Card Fee Management section -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6 transition-colors duration-200">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">ATM Card Fee Management</h2>
+            
+            <!-- Display current fees -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Current Account Card Fee</p>
+                    <p class="text-2xl font-bold text-blue-600 dark:text-blue-400" id="currentFeeDisplay">Loading...</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Savings Account Card Fee</p>
+                    <p class="text-2xl font-bold text-blue-600 dark:text-blue-400" id="savingsFeeDisplay">Loading...</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Account Card Fee</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="currentFee" step="0.01" placeholder="0.00" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                            <button onclick="setCardFee('current')" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                                Set Fee
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Savings Account Card Fee</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="savingsFee" step="0.01" placeholder="0.00" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                            <button onclick="setCardFee('savings')" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                                Set Fee
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Updated ATM card requests table with filter and actions -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">ATM Card Requests</h2>
+                
+                <div class="flex gap-2">
+                    <select id="statusFilter" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                    </select>
+                    <button onclick="loadATMCards()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">User</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Account Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Card Number</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Fee</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Requested</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="atmTable" class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <tr>
+                            <td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Loading ATM requests...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Added toast notification container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <script>
+        const API_BASE_URL = window.getApiBaseUrl("admin");
+        
+        function initTheme() {
+            const theme = localStorage.getItem('adminTheme') || 'dark';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.getElementById('sunIcon').classList.remove('hidden');
+                document.getElementById('moonIcon').classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('sunIcon').classList.add('hidden');
+                document.getElementById('moonIcon').classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const isDark = document.documentElement.classList.contains('dark');
+            if (isDark) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('adminTheme', 'light');
+                document.getElementById('sunIcon').classList.add('hidden');
+                document.getElementById('moonIcon').classList.remove('hidden');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('adminTheme', 'dark');
+                document.getElementById('sunIcon').classList.remove('hidden');
+                document.getElementById('moonIcon').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        });
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500',
+                warning: 'bg-yellow-500'
+            };
+            
+            toast.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-0 opacity-100 max-w-sm`;
+            toast.textContent = message;
+            
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateX(400px)';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../auth/login.html';
+                return false;
+            }
+            return true;
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '../auth/login.html';
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('mobileLogoutBtn').addEventListener('click', logout);
+
+        async function loadCardFees() {
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await axios.get(`${API_BASE_URL}/card-fee`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                const fees = response.data.fees || {};
+                
+                document.getElementById('currentFeeDisplay').textContent = fees.current !== undefined ? `$${parseFloat(fees.current).toFixed(2)}` : 'Not Set';
+                document.getElementById('savingsFeeDisplay').textContent = fees.savings !== undefined ? `$${parseFloat(fees.savings).toFixed(2)}` : 'Not Set';
+                
+                // Pre-populate input fields
+                if (fees.current !== undefined) {
+                    document.getElementById('currentFee').value = parseFloat(fees.current).toFixed(2);
+                }
+                if (fees.savings !== undefined) {
+                    document.getElementById('savingsFee').value = parseFloat(fees.savings).toFixed(2);
+                }
+            } catch (error) {
+                console.error('Failed to load card fees:', error);
+                document.getElementById('currentFeeDisplay').textContent = 'Error';
+                document.getElementById('savingsFeeDisplay').textContent = 'Error';
+            }
+        }
+
+        async function setCardFee(accountType) {
+            const feeInput = accountType === 'current' ? document.getElementById('currentFee') : document.getElementById('savingsFee');
+            const fee = parseFloat(feeInput.value);
+
+            if (isNaN(fee) || fee < 0) {
+                showToast('Please enter a valid fee amount', 'error');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.post(
+                    `${API_BASE_URL}/set-card-fee`,
+                    { account_type: accountType, fee },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                showToast(response.data.message, 'success');
+                loadCardFees();
+            } catch (error) {
+                showToast(error.response?.data?.error || 'Failed to set card fee', 'error');
+            }
+        }
+
+        async function loadATMCards() {
+            const token = localStorage.getItem('token');
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            try {
+                const response = await axios.get(`${API_BASE_URL}/atm-cards`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                let cards = response.data.atm_cards || [];
+                
+                if (statusFilter) {
+                    cards = cards.filter(card => card.status === statusFilter);
+                }
+
+                const tbody = document.getElementById('atmTable');
+                
+                if (cards.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">No ATM card requests found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = cards.map(card => {
+                    const statusColors = {
+                        pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+                        approved: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                    };
+
+                    const maskedCard = card.card_number.replace(/(\d{4})(\d{4})(\d{4})(\d{4})/, '$1 •••• •••• $4');
+
+                    return `
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">${card.full_name}</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">${card.email}</div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-white capitalize">${card.account_type}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-white font-mono">${maskedCard}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">${card.fee}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusColors[card.status] || 'bg-gray-100 text-gray-800'}">${card.status}</span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${card.created_at || 'N/A'}</td>
+                            <td class="px-6 py-4 text-sm space-x-2">
+                                ${card.status === 'pending' ? `
+                                    <button onclick="approveCard(${card.id})" class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-medium transition-colors">
+                                        Approve
+                                    </button>
+                                ` : ''}
+                                <button onclick="deleteCard(${card.id})" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                showToast(error.response?.data?.error || 'Failed to load ATM cards', 'error');
+                document.getElementById('atmTable').innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-red-500">Failed to load ATM cards</td></tr>';
+            }
+        }
+
+        async function approveCard(cardId) {
+            if (!confirm('Are you sure you want to approve this ATM card request?')) return;
+
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await axios.put(
+                    `${API_BASE_URL}/atm-cards/${cardId}/approve`,
+                    {},
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                showToast(response.data.message, 'success');
+                loadATMCards();
+            } catch (error) {
+                showToast(error.response?.data?.error || 'Failed to approve card', 'error');
+            }
+        }
+
+        async function deleteCard(cardId) {
+            if (!confirm('Are you sure you want to delete this ATM card? This action cannot be undone.')) return;
+
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await axios.delete(
+                    `${API_BASE_URL}/atm-cards/${cardId}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                showToast(response.data.message, 'success');
+                loadATMCards();
+            } catch (error) {
+                showToast(error.response?.data?.error || 'Failed to delete card', 'error');
+            }
+        }
+
+        document.getElementById('statusFilter').addEventListener('change', loadATMCards);
+
+        if (checkAuth()) {
+            initTheme();
+            loadCardFees();
+            loadATMCards();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,597 @@
+<!-- admin-profile.html -->
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Profile - SecureBank</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#1e3a8a",
+            secondary: "#3b82f6",
+            accent: "#60a5fa",
+            dark: "#0f172a",
+            light: "#f8fafc",
+          },
+        },
+      },
+    };
+  </script>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+  <!-- NAV (same style you provided) -->
+  <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center space-x-8">
+          <h1 class="text-xl sm:text-2xl font-bold text-primary dark:text-blue-400">SecureBank Admin</h1>
+
+          <div class="hidden md:flex space-x-1">
+            <a href="admin-dashboard.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Dashboard</a>
+            <a href="user-management.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Users</a>
+            <a href="transfer-management.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Transfers</a>
+            <a href="atm-management.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">ATM</a>
+            <a href="simulate-transactions.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Simulate</a>
+            <a href="admin-wallets.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Wallets</a>
+            <a href="admin-tickets.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Tickets</a>
+            <a href="admin-deposits.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Deposits</a>
+
+            <!-- current page highlight -->
+            <a href="admin-profile.html" class="px-4 py-2 text-white bg-primary dark:bg-blue-600 rounded-lg font-medium transition-colors">Profile</a>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 sm:space-x-4">
+          <button id="themeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+            <svg id="sunIcon" class="w-5 h-5 text-gray-700 dark:text-gray-300 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+              </path>
+            </svg>
+            <svg id="moonIcon" class="w-5 h-5 text-gray-700 dark:text-gray-300 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
+              </path>
+            </svg>
+          </button>
+
+          <div class="text-right hidden sm:block">
+            <p class="text-sm font-medium text-gray-900 dark:text-gray-100" id="adminName">Admin User</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
+          </div>
+
+          <button id="logoutButton" class="hidden sm:block px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors text-sm">
+            Logout
+          </button>
+
+          <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+            <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div class="px-4 py-3 space-y-2">
+        <a href="admin-dashboard.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Dashboard</a>
+        <a href="user-management.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Users</a>
+        <a href="transfer-management.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Transfers</a>
+        <a href="atm-management.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">ATM</a>
+        <a href="simulate-transactions.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Simulate</a>
+        <a href="admin-wallets.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Wallets</a>
+        <a href="admin-tickets.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Tickets</a>
+        <a href="admin-deposits.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium">Deposits</a>
+        <a href="admin-profile.html" class="block px-4 py-2 text-white bg-primary dark:bg-blue-600 rounded-lg font-medium">Profile</a>
+
+        <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
+          <p class="px-4 py-1 text-sm font-medium text-gray-900 dark:text-gray-100" id="adminNameMobile">Admin User</p>
+          <button id="logoutButtonMobile" class="w-full mt-2 px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors text-sm">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Admin Profile</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400">View and update your admin profile details.</p>
+      </div>
+      <div class="flex gap-2">
+        <button id="refreshBtn" class="px-4 py-2 rounded-lg bg-gray-900 text-white dark:bg-white dark:text-gray-900 font-medium hover:opacity-90">
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div id="alertBox" class="hidden mb-6 p-4 rounded-lg border"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- LEFT: PROFILE CARD -->
+      <section class="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+            <img id="avatarImg" src="" alt="Profile" class="w-full h-full object-cover hidden">
+            <span id="avatarFallback" class="text-lg font-bold text-gray-700 dark:text-gray-200">A</span>
+          </div>
+          <div class="min-w-0">
+            <p class="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate" id="p_full_name">—</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 truncate" id="p_email">—</p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <span id="badgeStatus" class="px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">status: —</span>
+              <span id="badgeVerified" class="px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">email: —</span>
+              <span class="px-2 py-1 text-xs rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">admin</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 space-y-3 text-sm">
+          <div class="flex justify-between gap-3">
+            <span class="text-gray-600 dark:text-gray-400">Username</span>
+            <span class="text-gray-900 dark:text-gray-100 font-medium" id="p_username">—</span>
+          </div>
+          <div class="flex justify-between gap-3">
+            <span class="text-gray-600 dark:text-gray-400">Account #</span>
+            <span class="text-gray-900 dark:text-gray-100 font-medium" id="p_account_number">—</span>
+          </div>
+          <div class="flex justify-between gap-3">
+            <span class="text-gray-600 dark:text-gray-400">Current Acc</span>
+            <span class="text-gray-900 dark:text-gray-100 font-medium" id="p_c_account_number">—</span>
+          </div>
+          <div class="flex justify-between gap-3">
+            <span class="text-gray-600 dark:text-gray-400">Savings Acc</span>
+            <span class="text-gray-900 dark:text-gray-100 font-medium" id="p_s_account_number">—</span>
+          </div>
+          <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Balances</p>
+            <div class="mt-2 space-y-2">
+              <div class="flex justify-between">
+                <span class="text-gray-600 dark:text-gray-400">Current</span>
+                <span class="text-gray-900 dark:text-gray-100 font-semibold" id="p_current_balance">—</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600 dark:text-gray-400">Savings</span>
+                <span class="text-gray-900 dark:text-gray-100 font-semibold" id="p_savings_balance">—</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600 dark:text-gray-400">Loan</span>
+                <span class="text-gray-900 dark:text-gray-100 font-semibold" id="p_loan_balance">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: EDIT PROFILE + CHANGE PASSWORD -->
+      <section class="lg:col-span-2 space-y-6">
+        <!-- EDIT PROFILE -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Edit Profile</h3>
+            <span class="text-xs text-gray-500 dark:text-gray-400">PATCH /admin/profile</span>
+          </div>
+
+          <form id="profileForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+              <input id="full_name" type="text" class="mt-1 w-full rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-4 py-2 text-gray-900 dark:text-gray-100" placeholder="Full name">
+            </div>
+
+            <div>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+              <input id="username" type="text" class="mt-1 w-full rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-4 py-2 text-gray-900 dark:text-gray-100" placeholder="Username">
+            </div>
+
+            <div>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+              <input id="email" type="email" class="mt-1 w-full rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-4 py-2 text-gray-900 dark:text-gray-100" placeholder="Email">
+            </div>
+
+            <div>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Currency Sign</label>
+              <input id="currency_sign" type="text" class="mt-1 w-full rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-4 py-2 text-gray-900 dark:text-gray-100" placeholder="₦, $, €">
+            </div>
+
+            <div>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Account Status</label>
+              <select id="acct_status" class="mt-1 w-full rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-4 py-2 text-gray-900 dark:text-gray-100">
+                <option value="">(no change)</option>
+                <option value="active">active</option>
+                <option value="hold">hold</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email Verified</label>
+              <select id="email_verified" class="mt-1 w-full rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-4 py-2 text-gray-900 dark:text-gray-100">
+                <option value="">(no change)</option>
+                <option value="1">Yes (1)</option>
+                <option value="0">No (0)</option>
+              </select>
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Profile Image URL</label>
+              <input id="profile_image_url" type="text" class="mt-1 w-full rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-4 py-2 text-gray-900 dark:text-gray-100" placeholder="https://...">
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">This updates user_images.image_url (upsert).</p>
+            </div>
+
+            <div class="md:col-span-2 flex flex-wrap gap-3 pt-2">
+              <button type="submit" id="saveProfileBtn" class="px-5 py-2 rounded-lg bg-primary dark:bg-blue-600 text-white font-medium hover:opacity-90">
+                Save Changes
+              </button>
+              <button type="button" id="resetFormBtn" class="px-5 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium hover:opacity-90">
+                Reset Form
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- CHANGE PASSWORD -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Change Password</h3>
+            <span class="text-xs text-gray-500 dark:text-gray-400">PUT /admin/change-password</span>
+          </div>
+
+          <form id="passwordForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Old Password</label>
+              <input id="oldPassword" type="password" class="mt-1 w-full rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-4 py-2 text-gray-900 dark:text-gray-100" placeholder="Enter old password">
+            </div>
+
+            <div>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">New Password</label>
+              <input id="newPassword" type="password" class="mt-1 w-full rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-4 py-2 text-gray-900 dark:text-gray-100" placeholder="Enter new password">
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Recommended: 8+ chars.</p>
+            </div>
+
+            <div class="md:col-span-2 flex flex-wrap gap-3 pt-2">
+              <button type="submit" id="changePassBtn" class="px-5 py-2 rounded-lg bg-green-600 text-white font-medium hover:opacity-90">
+                Update Password
+              </button>
+              <button type="button" id="clearPassBtn" class="px-5 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium hover:opacity-90">
+                Clear
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // ✅ Match your backend base
+    const API_BASE_URL = window.getApiBaseUrl("admin");
+
+    // ---------------------------
+    // Theme
+    // ---------------------------
+    function initTheme() {
+      const savedTheme = localStorage.getItem("theme") || "dark";
+      if (savedTheme === "dark") document.documentElement.classList.add("dark");
+      else document.documentElement.classList.remove("dark");
+    }
+
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      document.documentElement.classList.toggle("dark");
+      const isDark = document.documentElement.classList.contains("dark");
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+    });
+
+    document.getElementById("mobileMenuBtn").addEventListener("click", () => {
+      document.getElementById("mobileMenu").classList.toggle("hidden");
+    });
+
+    // ---------------------------
+    // Auth / Token
+    // ---------------------------
+    function getToken() {
+      // ✅ your existing storage key in your dashboard code
+      return localStorage.getItem("token");
+    }
+
+    function checkAuth() {
+      const token = getToken();
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+      // ✅ allow either user.role === 'admin' OR user.is_admin truthy
+      if (!token || (((!user.role || user.role !== "admin") && !user.is_admin))) {
+        window.location.href = "../auth/login.html";
+        return false;
+      }
+
+      const name = user.full_name || user.name || user.username || "Admin";
+      document.getElementById("adminName").textContent = name;
+      document.getElementById("adminNameMobile").textContent = name;
+      return true;
+    }
+
+    function handleLogout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "../auth/login.html";
+    }
+
+    document.getElementById("logoutButton").addEventListener("click", handleLogout);
+    document.getElementById("logoutButtonMobile").addEventListener("click", handleLogout);
+
+    // ---------------------------
+    // Alerts
+    // ---------------------------
+    function showAlert(type, msg) {
+      const box = document.getElementById("alertBox");
+      box.classList.remove("hidden");
+
+      // reset classes
+      box.className = "mb-6 p-4 rounded-lg border";
+
+      if (type === "success") {
+        box.classList.add("bg-green-50", "border-green-200", "text-green-800", "dark:bg-green-900/20", "dark:border-green-800/40", "dark:text-green-200");
+      } else if (type === "error") {
+        box.classList.add("bg-red-50", "border-red-200", "text-red-800", "dark:bg-red-900/20", "dark:border-red-800/40", "dark:text-red-200");
+      } else {
+        box.classList.add("bg-gray-50", "border-gray-200", "text-gray-800", "dark:bg-gray-800", "dark:border-gray-700", "dark:text-gray-200");
+      }
+
+      box.textContent = msg;
+      setTimeout(() => box.classList.add("hidden"), 4500);
+    }
+
+    function safeErr(error, fallback) {
+      return (
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.response?.data?.details ||
+        error?.message ||
+        fallback
+      );
+    }
+
+    function money(n) {
+      const num = Number(n || 0);
+      if (!Number.isFinite(num)) return "0";
+      return num.toLocaleString();
+    }
+
+    // ---------------------------
+    // API calls
+    // ---------------------------
+    async function fetchAdminProfile() {
+      const token = getToken();
+      const res = await axios.get(`${API_BASE_URL}/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return res.data?.user;
+    }
+
+    async function patchAdminProfile(payload) {
+      const token = getToken();
+      const res = await axios.patch(`${API_BASE_URL}/profile`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return res.data?.user;
+    }
+
+    async function changeAdminPassword(payload) {
+      const token = getToken();
+      const res = await axios.put(`${API_BASE_URL}/change-password`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return res.data;
+    }
+
+    // ---------------------------
+    // UI binding
+    // ---------------------------
+    let latestUser = null;
+
+    function renderProfile(u) {
+      if (!u) return;
+
+      latestUser = u;
+
+      // card top
+      document.getElementById("p_full_name").textContent = u.full_name || "—";
+      document.getElementById("p_email").textContent = u.email || "—";
+
+      // badges
+      const status = String(u.acct_status || "").toLowerCase() || "—";
+      const verified = Number(u.email_verified) === 1;
+
+      const badgeStatus = document.getElementById("badgeStatus");
+      badgeStatus.textContent = `status: ${status}`;
+
+      const badgeVerified = document.getElementById("badgeVerified");
+      badgeVerified.textContent = `email: ${verified ? "verified" : "not verified"}`;
+
+      // fields
+      document.getElementById("p_username").textContent = u.username || "—";
+      document.getElementById("p_account_number").textContent = u.account_number || "—";
+      document.getElementById("p_c_account_number").textContent = u.c_account_number || "—";
+      document.getElementById("p_s_account_number").textContent = u.s_account_number || "—";
+
+      // balances (use currency_sign if present)
+      const sign = u.currency_sign || "";
+      document.getElementById("p_current_balance").textContent = `${sign}${money(u.current_balance)}`;
+      document.getElementById("p_savings_balance").textContent = `${sign}${money(u.savings_balance)}`;
+      document.getElementById("p_loan_balance").textContent = `${sign}${money(u.loan_balance)}`;
+
+      // avatar
+      const img = (u.profile_image_url || "").trim();
+      const avatarImg = document.getElementById("avatarImg");
+      const fallback = document.getElementById("avatarFallback");
+
+      const letter = String(u.full_name || u.username || "A").trim().charAt(0).toUpperCase() || "A";
+      fallback.textContent = letter;
+
+      if (img) {
+        avatarImg.src = img;
+        avatarImg.classList.remove("hidden");
+        fallback.classList.add("hidden");
+      } else {
+        avatarImg.classList.add("hidden");
+        fallback.classList.remove("hidden");
+      }
+
+      // Fill form defaults (only as placeholders; user can edit)
+      document.getElementById("full_name").value = u.full_name || "";
+      document.getElementById("username").value = u.username || "";
+      document.getElementById("email").value = u.email || "";
+      document.getElementById("currency_sign").value = u.currency_sign || "";
+      document.getElementById("profile_image_url").value = u.profile_image_url || "";
+
+      // selects
+      document.getElementById("acct_status").value = ""; // keep no-change default
+      document.getElementById("email_verified").value = ""; // keep no-change default
+
+      // update nav name
+      const name = u.full_name || u.username || "Admin";
+      document.getElementById("adminName").textContent = name;
+      document.getElementById("adminNameMobile").textContent = name;
+    }
+
+    function buildPatchPayload() {
+      // Only send fields that changed vs latestUser
+      const payload = {};
+
+      const full_name = document.getElementById("full_name").value.trim();
+      const username = document.getElementById("username").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const currency_sign = document.getElementById("currency_sign").value.trim();
+      const acct_status = document.getElementById("acct_status").value; // '' means no change
+      const email_verified = document.getElementById("email_verified").value; // '' means no change
+      const profile_image_url = document.getElementById("profile_image_url").value.trim();
+
+      if (!latestUser) return {};
+
+      if (full_name !== (latestUser.full_name || "")) payload.full_name = full_name;
+      if (username !== (latestUser.username || "")) payload.username = username;
+      if (email !== (latestUser.email || "")) payload.email = email;
+      if (currency_sign !== (latestUser.currency_sign || "")) payload.currency_sign = currency_sign;
+
+      if (acct_status) payload.acct_status = acct_status;
+      if (email_verified !== "") payload.email_verified = Number(email_verified);
+
+      // send only if changed
+      if (profile_image_url !== (latestUser.profile_image_url || "")) payload.profile_image_url = profile_image_url;
+
+      return payload;
+    }
+
+    // ---------------------------
+    // Events
+    // ---------------------------
+    document.getElementById("refreshBtn").addEventListener("click", async () => {
+      try {
+        const u = await fetchAdminProfile();
+        renderProfile(u);
+        showAlert("success", "Profile refreshed.");
+      } catch (e) {
+        showAlert("error", safeErr(e, "Failed to refresh profile"));
+      }
+    });
+
+    document.getElementById("resetFormBtn").addEventListener("click", () => {
+      if (latestUser) renderProfile(latestUser);
+      showAlert("info", "Form reset.");
+    });
+
+    document.getElementById("profileForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const payload = buildPatchPayload();
+
+      if (!payload || Object.keys(payload).length === 0) {
+        showAlert("error", "No update fields provided.");
+        return;
+      }
+
+      const btn = document.getElementById("saveProfileBtn");
+      const old = btn.textContent;
+      btn.textContent = "Saving...";
+      btn.disabled = true;
+
+      try {
+        const u = await patchAdminProfile(payload);
+        renderProfile(u);
+        showAlert("success", "Profile updated successfully.");
+      } catch (err) {
+        showAlert("error", safeErr(err, "Failed to update profile"));
+      } finally {
+        btn.textContent = old;
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById("clearPassBtn").addEventListener("click", () => {
+      document.getElementById("oldPassword").value = "";
+      document.getElementById("newPassword").value = "";
+    });
+
+    document.getElementById("passwordForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const oldPassword = document.getElementById("oldPassword").value;
+      const newPassword = document.getElementById("newPassword").value;
+
+      if (!oldPassword || !newPassword) {
+        showAlert("error", "Old and new password required.");
+        return;
+      }
+      if (newPassword.length < 8) {
+        showAlert("error", "New password must be at least 8 characters.");
+        return;
+      }
+
+      const btn = document.getElementById("changePassBtn");
+      const oldTxt = btn.textContent;
+      btn.textContent = "Updating...";
+      btn.disabled = true;
+
+      try {
+        await changeAdminPassword({ oldPassword, newPassword });
+        document.getElementById("oldPassword").value = "";
+        document.getElementById("newPassword").value = "";
+        showAlert("success", "Password updated successfully.");
+      } catch (err) {
+        showAlert("error", safeErr(err, "Failed to change password"));
+      } finally {
+        btn.textContent = oldTxt;
+        btn.disabled = false;
+      }
+    });
+
+    // ---------------------------
+    // Init
+    // ---------------------------
+    (async function init() {
+      initTheme();
+      if (!checkAuth()) return;
+
+      try {
+        const u = await fetchAdminProfile();
+        renderProfile(u);
+      } catch (e) {
+        showAlert("error", safeErr(e, "Failed to load admin profile"));
+      }
+    })();
+  </script>
+</body>
+</html>

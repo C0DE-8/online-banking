@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transaction History - Fconvenience bank</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#1e3a8a",
+            secondary: "#3b82f6",
+            accent: "#60a5fa",
+            dark: "#0f172a",
+            light: "#f8fafc",
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    @keyframes shimmer {
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 1000px 100%;
+      animation: shimmer 2s infinite;
+      border-radius: 10px;
+    }
+
+    /* Tailwind CDN doesn't include line-clamp plugin by default */
+    .line-clamp-1{
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 1;
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 via-white to-indigo-50 min-h-screen">
+  <nav class="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center">
+          <h1 class="text-xl sm:text-2xl font-bold text-primary">Fconvenience bank</h1>
+          <div class="hidden md:block ml-10">
+            <div class="flex items-baseline space-x-6">
+              <a href="dashboard.html" class="text-gray-700 hover:text-primary transition-colors">Dashboard</a>
+              <a href="transactions-history.html" class="text-primary font-medium border-b-2 border-primary pb-1">Transactions</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 sm:space-x-4">
+          <img id="userAvatar" src="/placeholder.svg" alt="Profile" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-primary hidden">
+          <span id="userName" class="text-gray-700 font-medium text-sm sm:text-base hidden sm:inline"></span>
+          <button id="logoutButton" class="text-gray-700 hover:text-primary font-medium transition-colors text-sm sm:text-base">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <div class="mb-6 bg-white/70 backdrop-blur-lg rounded-2xl shadow-lg border border-white/50 p-4 sm:p-6">
+      <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+        <img id="profileImage" src="/placeholder.svg" alt="Profile" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-primary/20 object-cover">
+        <div class="flex-1 text-center sm:text-left">
+          <h3 id="fullName" class="text-xl sm:text-2xl font-bold text-gray-900"></h3>
+          <p id="userEmail" class="text-sm sm:text-base text-gray-600 mt-1"></p>
+          <div class="flex flex-wrap gap-2 sm:gap-4 mt-3 justify-center sm:justify-start">
+            <div onclick="toggleAccountNumber()" class="bg-primary/10 px-3 py-1 rounded-lg cursor-pointer hover:bg-primary/20 transition-colors">
+              <p class="text-xs text-gray-600">Account Number</p>
+              <div class="flex items-center gap-2">
+                <p id="accountNumber" class="text-sm font-semibold text-primary"></p>
+                <span id="accountType" class="text-xs text-gray-500"></span>
+              </div>
+            </div>
+            <div class="bg-primary/10 px-3 py-1 rounded-lg">
+              <p class="text-xs text-gray-600">Status</p>
+              <p id="accountStatus" class="text-sm font-semibold text-green-600"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Transaction History</h2>
+        <p class="text-sm sm:text-base text-gray-600">View all your transaction records</p>
+      </div>
+      <a href="dashboard.html" class="w-full sm:w-auto text-center bg-white/70 backdrop-blur-md text-gray-700 px-4 sm:px-6 py-2 rounded-lg hover:bg-white transition-all font-medium border border-gray-200">
+        Back to Dashboard
+      </a>
+    </div>
+
+    <div class="bg-white/70 backdrop-blur-lg rounded-2xl shadow-lg border border-white/50 p-4 sm:p-6">
+      <div class="border-b border-gray-200 mb-6 overflow-x-auto">
+        <div class="flex space-x-4 sm:space-x-8 min-w-max sm:min-w-0">
+          <button class="tab-button pb-4 px-1 border-b-2 border-primary text-primary font-medium whitespace-nowrap text-sm sm:text-base" data-tab="all">
+            All Transactions
+          </button>
+          <button class="tab-button pb-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap text-sm sm:text-base" data-tab="wire">
+            Wire Transfers
+          </button>
+          <button class="tab-button pb-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap text-sm sm:text-base" data-tab="local">
+            Local Transfers
+          </button>
+          <button class="tab-button pb-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap text-sm sm:text-base" data-tab="self">
+            Self Transfers
+          </button>
+        </div>
+      </div>
+
+      <div id="transactionsContainer" class="space-y-3 sm:space-y-4">
+        <div class="text-center py-12 text-gray-500">Loading transactions...</div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE_URL = window.getApiBaseUrl("user");
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (!token || !user.id) window.location.href = "../auth/login.html";
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+    let currentAccountType = "current";
+    let accountData = {};
+
+    function toggleAccountNumber() {
+      currentAccountType = currentAccountType === "current" ? "savings" : "current";
+      if (currentAccountType === "current") {
+        document.getElementById("accountNumber").textContent = accountData.c_account_number || "N/A";
+        document.getElementById("accountType").textContent = "(Current)";
+      } else {
+        document.getElementById("accountNumber").textContent = accountData.s_account_number || "N/A";
+        document.getElementById("accountType").textContent = "(Savings)";
+      }
+    }
+
+    async function loadUserProfile() {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/profile`);
+        const userData = response.data.user;
+        accountData = userData;
+
+        document.getElementById("fullName").textContent = userData.full_name || "User";
+        document.getElementById("userName").textContent = userData.full_name || userData.username || "User";
+        document.getElementById("userEmail").textContent = userData.email || "";
+        document.getElementById("accountNumber").textContent = userData.c_account_number || "N/A";
+        document.getElementById("accountType").textContent = "(Current)";
+        document.getElementById("accountStatus").textContent = userData.acct_status || "Active";
+
+        const profileImageUrl = userData.profile_image_url
+          ? window.getApiAssetUrl(userData.profile_image_url)
+          : "https://via.placeholder.com/150";
+
+        document.getElementById("profileImage").src = profileImageUrl;
+        document.getElementById("userAvatar").src = profileImageUrl;
+        document.getElementById("userAvatar").classList.remove("hidden");
+      } catch (error) {
+        console.error("Error loading profile:", error);
+      }
+    }
+
+    // ✅ Robust money parsing (keeps ₦/$/etc)
+    function parseMoney(value) {
+      const str = String(value ?? "").trim();
+      const currency = (str.match(/^[^\d-]+/) || ["$"])[0].trim() || "$";
+      const numStr = str.replace(/[^0-9.-]/g, "");
+      const amount = Number(numStr);
+      const safe = Number.isFinite(amount) ? amount : 0;
+      return {
+        currency,
+        amount: safe,
+        formatted: `${currency}${Math.abs(safe).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      };
+    }
+
+    function toSortMs(tx) {
+      const raw = tx.date || tx.created_at || "";
+      const ms = Date.parse(raw);
+      if (Number.isFinite(ms)) return ms;
+      return 0;
+    }
+
+    function showLoadingSkeleton() {
+      const container = document.getElementById("transactionsContainer");
+      container.innerHTML = Array(6).fill(0).map(() => `
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-gray-200 rounded-xl bg-white/50">
+          <div class="flex items-start sm:items-center space-x-3 sm:space-x-4 w-full sm:w-auto mb-3 sm:mb-0">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full skeleton flex-shrink-0"></div>
+            <div class="flex-1 min-w-0 space-y-2">
+              <div class="skeleton h-4 w-40"></div>
+              <div class="skeleton h-3 w-28"></div>
+              <div class="skeleton h-3 w-56"></div>
+            </div>
+          </div>
+          <div class="w-full sm:w-auto sm:text-right flex sm:flex-col justify-between sm:justify-end items-center sm:items-end space-y-2">
+            <div class="skeleton h-6 w-28"></div>
+            <div class="flex gap-2">
+              <div class="skeleton h-6 w-16 rounded-full"></div>
+              <div class="skeleton h-6 w-20 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    let allTransactions = [];
+    let wireTransactions = [];
+    let localTransactions = [];
+    let selfTransactions = [];
+
+    async function loadTransactions() {
+      showLoadingSkeleton();
+
+      try {
+        const [wireRes, localRes, selfRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/transfer/history/wire`),
+          axios.get(`${API_BASE_URL}/transfer/history/local`),
+          axios.get(`${API_BASE_URL}/transfer/self/history`)
+        ]);
+
+        const wireArr = wireRes.data.wire_history || wireRes.data.history || [];
+        const localArr = localRes.data.history || localRes.data.local_history || [];
+        const selfArr = selfRes.data.history || [];
+
+        wireTransactions = wireArr.map(t => ({
+          ...t,
+          uiType: "Wire",
+          uiTypeKey: "wire",
+          sortMs: toSortMs(t),
+          money: parseMoney(t.amount),
+        }));
+
+        localTransactions = localArr.map(t => ({
+          ...t,
+          uiType: "Local",
+          uiTypeKey: "local",
+          sortMs: toSortMs(t),
+          money: parseMoney(t.amount),
+        }));
+
+        selfTransactions = selfArr.map(t => ({
+          ...t,
+          uiType: "Self",
+          uiTypeKey: "self",
+          sortMs: toSortMs(t),
+          money: parseMoney(t.amount),
+        }));
+
+        allTransactions = [...wireTransactions, ...localTransactions, ...selfTransactions]
+          .sort((a, b) => (b.sortMs || 0) - (a.sortMs || 0));
+
+        displayTransactions("all");
+      } catch (error) {
+        console.error("Error loading transactions:", error);
+        document.getElementById("transactionsContainer").innerHTML = `
+          <div class="text-center py-12 text-red-600 font-medium">
+            Failed to load transactions
+          </div>
+        `;
+      }
+    }
+
+    // ✅ Uses your DB field: entry_type enum('credit','debit')
+    // ✅ Self transfers are internal moves between your own accounts
+    function getTxDirection(tx) {
+      const entry = (tx.entry_type || "").toString().toLowerCase();
+
+      if (tx.uiTypeKey === "self") return "internal";
+      if (entry === "credit") return "credit";
+      if (entry === "debit") return "debit";
+
+      // fallback if entry_type missing
+      return "debit";
+    }
+
+    function getSelfLabel(tx) {
+      // Try to read any likely fields (safe fallbacks)
+      const from =
+        tx.from_account_type || tx.from_type || tx.from || tx.from_account || tx.source_account || "";
+      const to =
+        tx.to_account_type || tx.to_type || tx.to || tx.to_account || tx.destination_account || "";
+
+      const clean = (v) => String(v || "").toLowerCase().includes("sav") ? "Savings" :
+                           String(v || "").toLowerCase().includes("cur") ? "Current" : "";
+
+      const fromLabel = clean(from);
+      const toLabel = clean(to);
+
+      if (fromLabel && toLabel) return `${fromLabel} → ${toLabel}`;
+      return "Between your accounts";
+    }
+
+    function displayTransactions(tab) {
+      let transactions = [];
+      if (tab === "wire") transactions = wireTransactions;
+      else if (tab === "local") transactions = localTransactions;
+      else if (tab === "self") transactions = selfTransactions;
+      else transactions = allTransactions;
+
+      const container = document.getElementById("transactionsContainer");
+      if (!transactions.length) {
+        container.innerHTML = `<div class="text-center py-12 text-gray-500">No transactions found</div>`;
+        return;
+      }
+
+      container.innerHTML = transactions.map(tx => {
+        const typeColor = {
+          Wire: "bg-blue-100 text-blue-800",
+          Local: "bg-green-100 text-green-800",
+          Self: "bg-purple-100 text-purple-800",
+        }[tx.uiType] || "bg-gray-100 text-gray-800";
+
+        const status = (tx.status || "").toLowerCase();
+        const statusColor = {
+          completed: "bg-green-100 text-green-800",
+          pending: "bg-yellow-100 text-yellow-800",
+          processing: "bg-blue-100 text-blue-800",
+          failed: "bg-red-100 text-red-800",
+        }[status] || "bg-gray-100 text-gray-800";
+
+        const displayDate = tx.date || tx.created_at || "";
+        const displayName =
+          tx.account_name ||
+          tx.to_account ||
+          tx.bank_name ||
+          (tx.uiType === "Self" ? "Internal Transfer" : "Transfer");
+
+        const displayReason = tx.reason || "";
+
+        // ✅ NEW: Uses entry_type + internal for self
+        const direction = getTxDirection(tx);
+
+        let sign = "";
+        let amountColor = "text-gray-900";
+        let directionBadge = "bg-gray-100 text-gray-800";
+        let directionLabel = "Transfer";
+
+        if (direction === "debit") {
+          sign = "-";
+          amountColor = "text-red-600 bg-red-50 px-2 py-1 rounded-lg";
+          directionBadge = "bg-red-100 text-red-800";
+          directionLabel = "Debit";
+        } else if (direction === "credit") {
+          sign = "+";
+          amountColor = "text-green-600 bg-green-50 px-2 py-1 rounded-lg";
+          directionBadge = "bg-green-100 text-green-800";
+          directionLabel = "Credit";
+        } else if (direction === "internal") {
+          sign = "↔";
+          amountColor = "text-purple-700 bg-purple-50 px-2 py-1 rounded-lg";
+          directionBadge = "bg-purple-100 text-purple-800";
+          directionLabel = "Internal";
+        }
+
+        const selfSubLabel = tx.uiTypeKey === "self" ? getSelfLabel(tx) : "";
+
+        return `
+          <div onclick="viewTransaction('${tx.id}', '${tx.uiTypeKey}')"
+               class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-white hover:border-primary hover:shadow-md transition-all cursor-pointer bg-white/50">
+            <div class="flex items-start sm:items-center space-x-3 sm:space-x-4 w-full sm:w-auto mb-3 sm:mb-0">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full ${typeColor} flex items-center justify-center font-bold text-lg flex-shrink-0">
+                ${tx.uiType[0]}
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-gray-900 text-sm sm:text-base truncate">${displayName}</p>
+                <p class="text-xs sm:text-sm text-gray-500">${displayDate}</p>
+                ${selfSubLabel ? `<p class="text-xs sm:text-sm text-purple-700 mt-1 line-clamp-1">${selfSubLabel}</p>` : ""}
+                ${displayReason ? `<p class="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-1">${displayReason}</p>` : ""}
+              </div>
+            </div>
+
+            <div class="w-full sm:w-auto sm:text-right flex sm:flex-col justify-between sm:justify-end items-center sm:items-end">
+              <p class="font-bold ${amountColor} text-base sm:text-lg">
+                ${sign}${tx.money?.formatted || ""}
+              </p>
+
+              <div class="flex gap-2 mt-1 flex-wrap justify-end">
+                <span class="inline-block px-2 py-1 text-xs rounded-full ${typeColor}">
+                  ${tx.uiType}
+                </span>
+
+                <span class="inline-block px-2 py-1 text-xs rounded-full ${directionBadge}">
+                  ${directionLabel}
+                </span>
+
+                ${tx.status ? `
+                  <span class="inline-block px-2 py-1 text-xs rounded-full ${statusColor}">
+                    ${tx.status}
+                  </span>
+                ` : ""}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function viewTransaction(id, type) {
+      window.location.href = `transaction-detail.html?id=${id}&type=${type}`;
+    }
+
+    document.querySelectorAll(".tab-button").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".tab-button").forEach(btn => {
+          btn.classList.remove("border-primary", "text-primary");
+          btn.classList.add("border-transparent", "text-gray-500");
+        });
+
+        button.classList.remove("border-transparent", "text-gray-500");
+        button.classList.add("border-primary", "text-primary");
+
+        displayTransactions(button.dataset.tab);
+      });
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "../auth/login.html";
+    });
+
+    loadUserProfile();
+    loadTransactions();
+  </script>
+</body>
+</html>

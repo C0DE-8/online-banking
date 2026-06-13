@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Insigrains Bank Statement - October</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- HTML2PDF Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: #e9edf3;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ACCESS OVERLAY */
+  #access-overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at top, #1b335b, #050812);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    color: #fff;
+  }
+
+  .access-box {
+    background: rgba(9, 18, 34, 0.95);
+    padding: 24px 20px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .access-box h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .access-box p {
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: #c7d0e4;
+  }
+
+  .access-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid #445274;
+    margin-bottom: 12px;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .access-input:focus {
+    border-color: #42a5ff;
+  }
+
+  .access-btn {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+    font-weight: bold;
+    background: linear-gradient(135deg, #22b3ff, #00e0b8);
+    color: #04101f;
+    cursor: pointer;
+  }
+
+  .access-btn:hover {
+    filter: brightness(1.08);
+  }
+
+  .access-error {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #ff6b6b;
+    min-height: 16px;
+  }
+
+  /* MAIN STATEMENT LAYOUT */
+  .page-wrapper {
+    padding: 16px;
+  }
+
+  .statement-container {
+    max-width: 960px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 45px;
+    border: 1px solid #cad1d8;
+    border-radius: 6px;
+    position: relative;
+  }
+
+  .watermark {
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    font-size: 95px;
+    font-weight: bold;
+    color: rgba(200, 200, 200, 0.12);
+    transform: translate(-50%, -50%) rotate(-25deg);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .bank-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .bank-header h1 {
+    font-size: 38px;
+    margin: 0;
+    color: #0a233f;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+  .bank-header p {
+    font-size: 14px;
+    color: #555;
+    margin-top: 5px;
+  }
+
+  .info-section { font-size: 14px; margin-bottom: 25px; }
+  .section-title {
+    font-size: 17px;
+    font-weight: bold;
+    color: #0a233f;
+    padding-bottom: 3px;
+    border-bottom: 2px solid #0a233f;
+    display: inline-block;
+  }
+
+  /* TABLE WRAPPER FOR RESPONSIVE SCROLL */
+  .table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    min-width: 520px;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  th {
+    background: #0a233f;
+    color: #fff;
+    padding: 11px;
+    border-bottom: 2px solid #021629;
+    text-align: left;
+  }
+  td {
+    padding: 11px;
+    border-bottom: 1px solid #e1e6eb;
+  }
+  .credit { color: #007a1e; font-weight: bold; }
+  .debit { color: #c00000; font-weight: bold; }
+
+  .demo-stamp {
+    margin: 35px auto 0;
+    width: 200px;
+    padding: 8px;
+    text-align: center;
+    font-size: 15px;
+    color: #8b0000;
+    border: 3px solid #8b0000;
+    border-radius: 50%;
+    font-weight: bold;
+    transform: rotate(-10deg);
+    opacity: 0.7;
+  }
+
+  .footer-text {
+    text-align: center;
+    font-size: 12px;
+    color: #787878;
+    margin-top: 20px;
+  }
+
+  /* Download Button */
+  .download-btn {
+    display: none; /* hidden until unlocked */
+    margin: 16px auto 0;
+    background: #0a233f;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 3px 7px rgba(0,0,0,0.25);
+    max-width: 220px;
+    width: 100%;
+    display: none;
+  }
+  .download-btn:hover {
+    background: #133b66;
+  }
+
+  /* HIDDEN UTILITY */
+  .hidden {
+    display: none !important;
+  }
+
+  /* RESPONSIVE STYLES */
+  @media (max-width: 900px) {
+    .statement-container {
+      margin: 20px auto;
+      padding: 24px 18px;
+      border-radius: 4px;
+    }
+    .bank-header h1 {
+      font-size: 26px;
+    }
+    .watermark {
+      font-size: 60px;
+    }
+  }
+
+  @media (max-width: 600px) {
+    body {
+      background: #d7dde7;
+    }
+
+    .statement-container {
+      margin: 12px auto;
+      padding: 18px 12px;
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+    }
+
+    .bank-header h1 {
+      font-size: 22px;
+    }
+
+    .bank-header p {
+      font-size: 12px;
+    }
+
+    .info-section {
+      font-size: 13px;
+    }
+
+    table {
+      font-size: 12px;
+    }
+
+    th, td {
+      padding: 8px;
+    }
+
+    .demo-stamp {
+      transform: none;
+      width: 180px;
+      font-size: 13px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<!-- ACCESS CODE OVERLAY -->
+<div id="access-overlay">
+  <div class="access-box">
+    <h2>Insigrains Bank</h2>
+    <p>
+      For your security, please enter your 
+      <strong>Insigrains Online Banking password</strong>
+      to unlock and view this confidential statement.
+    </p>
+    <input
+      id="access-code-input"
+      class="access-input"
+      type="password"
+      placeholder="Enter account password"
+      autocomplete="off"
+    />
+    <button class="access-btn" onclick="unlockStatement()">Unlock Statement</button>
+    <div id="access-error" class="access-error"></div>
+  </div>
+</div>
+
+
+<div class="page-wrapper">
+
+  <button id="downloadBtn" class="download-btn" onclick="downloadPDF()">
+    Download Statement (PDF)
+  </button>
+
+  <div id="statement" class="statement-container hidden">
+
+    <div class="watermark">INSIGRAINS</div>
+
+    <div class="bank-header">
+      <h1>Insigrains Bank</h1>
+      <p>Client Financial Activity — Statement</p>
+    </div>
+
+    <div class="info-section">
+      <div class="section-title">Account Holder Information</div>
+      <p><strong>Name:</strong> Anthony Williams</p>
+      <p><strong>Account Number:</strong> ***-***9**1</p>
+      <p><strong>Account Type:</strong> Private Client Current Account</p>
+    </div>
+
+    <div class="info-section">
+      <div class="section-title">Statement Period</div>
+      <p>01 October — 31 October 2025</p>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Amount</th>
+          <th>Balance</th>
+        </tr>
+        <tr><td>01 Oct</td><td>Opening Balance</td><td class="credit">$1,000,000.00</td><td>$1,000,000.00</td></tr>
+        <tr><td>03 Oct</td><td>Incoming Transfer — Crypto Exchange</td><td class="credit">$500,000.00</td><td>$1,500,000.00</td></tr>
+        <tr><td>05 Oct</td><td>Luxury Hotel Booking</td><td class="debit">-$25,000.00</td><td>$1,475,000.00</td></tr>
+        <tr><td>08 Oct</td><td>Purchase — Anthony’s Autos (Vehicle Dealer)</td><td class="debit">-$500,000,000.00</td><td>-$498,525,000.00</td></tr>
+        <tr><td>10 Oct</td><td>Refund — Anthony’s Autos (Partial)</td><td class="credit">$75,000.00</td><td>-$498,450,000.00</td></tr>
+        <tr><td>15 Oct</td><td>Incoming Wire — Funding Received</td><td class="credit">$750,000.00</td><td>-$497,700,000.00</td></tr>
+        <tr><td>18 Oct</td><td>Online Purchase — Electronics</td><td class="debit">-$18,950.00</td><td>-$497,718,950.00</td></tr>
+        <tr><td>21 Oct</td><td>ATM Cash Withdrawal</td><td class="debit">-$5,000.00</td><td>-$497,723,950.00</td></tr>
+        <tr><td>25 Oct</td><td>Mobile Banking Deposit</td><td class="credit">$20,000.00</td><td>-$497,703,950.00</td></tr>
+        <tr><td>27 Oct</td><td>Emergency Card Replacement Fee</td><td class="debit">-$120.00</td><td>-$497,704,070.00</td></tr>
+        <tr><td>29 Oct</td><td>Restaurant Dining</td><td class="debit">-$1,750.00</td><td>-$497,705,820.00</td></tr>
+        <tr><td>31 Oct</td><td>Monthly Service Charge</td><td class="debit">-$50.00</td><td>-$497,705,870.00</td></tr>
+      </table>
+    </div>
+
+    <div class="demo-stamp">
+      ❖ STATEMENT COPY ❖<br>INSIGRAINS BANK
+    </div>
+
+    <p class="footer-text">
+      This statement is issued by Insigrains Bank PLC and is a certified record of account activity for the period stated above. All information contained herein is true and accurate to the best of our knowledge.
+    </p>
+
+  </div>
+</div>
+
+<script>
+  // Change this code to whatever you like
+  const ACCESS_CODE = "123456";
+
+  function unlockStatement() {
+    const input = document.getElementById("access-code-input");
+    const errorBox = document.getElementById("access-error");
+    const overlay = document.getElementById("access-overlay");
+    const statement = document.getElementById("statement");
+    const downloadBtn = document.getElementById("downloadBtn");
+
+    if (input.value.trim() === ACCESS_CODE) {
+      errorBox.textContent = "";
+      overlay.classList.add("hidden");
+      statement.classList.remove("hidden");
+      downloadBtn.style.display = "block";
+    } else {
+      errorBox.textContent = "Invalid access code. Please try again.";
+    }
+  }
+
+  // Optional: allow Enter key to submit code
+  document.getElementById("access-code-input").addEventListener("keyup", function (e) {
+    if (e.key === "Enter") {
+      unlockStatement();
+    }
+  });
+
+  function downloadPDF() {
+    const element = document.getElementById("statement");
+    const opt = {
+      margin: 0.5,
+      filename: 'InsigrainsBank_Statement_October.pdf',
+      image: { type: 'jpeg', quality: 1 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+  }
+</script>
+
+</body>
+</html>

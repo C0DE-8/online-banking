@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fconvenience bank</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#1e3a8a",
+            secondary: "#3b82f6",
+            accent: "#60a5fa",
+            dark: "#0f172a",
+            light: "#f8fafc",
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    .glass {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+    }
+    .glass-dark {
+      background: rgba(30, 58, 138, 0.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(30, 58, 138, 0.18);
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+    .animate-fade-in { animation: fadeIn 0.22s ease-out; }
+
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .animate-spin { animation: spin 1s linear infinite; }
+
+    @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+    .skeleton {
+      background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 50%, #f2f2f2 75%);
+      background-size: 1000px 100%;
+      animation: shimmer 2s infinite;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    @keyframes popIn { 0% { transform: scale(0.96); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .pop-in { animation: popIn 160ms ease-out; }
+
+    /* =========================
+       ✅ PRELOADER
+       ========================= */
+    #preloader {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: radial-gradient(800px 420px at 15% 10%, rgba(96,165,250,0.18), transparent 60%),
+                  radial-gradient(900px 500px at 80% 20%, rgba(30,58,138,0.18), transparent 60%),
+                  linear-gradient(135deg, #EFF6FF, #FFFFFF, #EFF6FF);
+    }
+    .pre-card{
+      width: min(520px, 92vw);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 22px 70px rgba(0,0,0,0.10);
+      border: 1px solid rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      overflow: hidden;
+      position: relative;
+    }
+    .pre-glow{
+      position:absolute;
+      inset:-120px -80px auto auto;
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, rgba(59,130,246,0.18), transparent 60%);
+      filter: blur(6px);
+      pointer-events:none;
+    }
+    .pre-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 12px;
+      border-radius: 999px;
+      background: rgba(30,58,138,0.06);
+      border: 1px solid rgba(30,58,138,0.12);
+      font-size: 12px;
+      color: rgba(15,23,42,0.72);
+      font-weight: 600;
+    }
+    .pre-spinner{
+      width: 14px; height: 14px;
+      border: 2px solid rgba(30,58,138,0.18);
+      border-top-color: rgba(30,58,138,0.75);
+      border-radius: 999px;
+      animation: spin 1s linear infinite;
+    }
+    .pre-title{
+      margin-top: 14px;
+      font-size: 18px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+    .pre-sub{
+      margin-top: 4px;
+      font-size: 13px;
+      color: rgba(15,23,42,0.62);
+    }
+    .pre-bars{
+      margin-top: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .pre-bar{
+      height: 12px;
+      border-radius: 10px;
+      background: linear-gradient(90deg, rgba(226,232,240,0.7), rgba(241,245,249,1), rgba(226,232,240,0.7));
+      background-size: 800px 100%;
+      animation: shimmer 1.6s infinite;
+    }
+    .pre-bar.sm{ width: 48%; }
+    .pre-bar.md{ width: 74%; }
+    .pre-bar.lg{ width: 100%; }
+    .pre-foot{
+      margin-top: 18px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12px;
+      color: rgba(15,23,42,0.52);
+    }
+    .pre-progress{
+      flex: 1;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(30,58,138,0.08);
+      overflow:hidden;
+      border: 1px solid rgba(30,58,138,0.10);
+    }
+    .pre-progress > span{
+      display:block;
+      width: 0%;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(59,130,246,0.55), rgba(30,58,138,0.70));
+      transition: width 260ms ease;
+    }
+
+    /* smooth fade-out */
+    .fade-out{
+      animation: fadeOut 220ms ease forwards;
+    }
+    @keyframes fadeOut{
+      to { opacity: 0; transform: scale(0.99); }
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 via-white to-blue-50 min-h-screen">
+
+  <!-- ✅ PRELOADER -->
+  <div id="preloader">
+    <div class="pre-card">
+      <div class="pre-glow"></div>
+      <div class="pre-badge">
+        <span class="pre-spinner"></span>
+        <span id="preStatus">Loading secure transfer tools…</span>
+      </div>
+
+      <div class="pre-title">Preparing your Wire Transfer</div>
+      <div class="pre-sub">Fetching your profile, balance and security requirements.</div>
+
+      <div class="pre-bars">
+        <div class="pre-bar lg"></div>
+        <div class="pre-bar md"></div>
+        <div class="pre-bar sm"></div>
+      </div>
+
+      <div class="pre-foot">
+        <div class="pre-progress"><span id="preProg"></span></div>
+        <div id="prePct">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav class="glass sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center">
+          <h1 class="text-xl md:text-2xl font-bold text-primary">Wire Transfers</h1>
+          <div class="hidden md:block ml-10">
+            <div class="flex items-baseline space-x-4 lg:space-x-6">
+              <a href="dashboard.html" class="text-gray-700 hover:text-primary transition-colors text-sm lg:text-base">Dashboard</a>
+              <a href="wire-transfer.html" class="text-primary font-medium border-b-2 border-primary pb-1 text-sm lg:text-base">Wire Transfer</a>
+              <a href="local-transfer.html" class="text-gray-700 hover:text-primary transition-colors text-sm lg:text-base">Local Transfer</a>
+              <a href="self-transfer.html" class="text-gray-700 hover:text-primary transition-colors text-sm lg:text-base">Self Transfer</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 md:space-x-4">
+          <span id="userName" class="hidden sm:inline text-gray-700 font-medium text-sm md:text-base"></span>
+          <button id="logoutButton" class="text-gray-700 hover:text-primary font-medium transition-colors text-sm md:text-base">
+            Logout
+          </button>
+          <button id="mobileMenuBtn" class="md:hidden text-gray-700 hover:text-primary">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="mobileMenu" class="hidden md:hidden border-t border-gray-200">
+      <div class="px-4 py-3 space-y-2">
+        <a href="dashboard.html" class="block text-gray-700 hover:text-primary transition-colors py-2">Dashboard</a>
+        <a href="wire-transfer.html" class="block text-primary font-medium py-2">Wire Transfer</a>
+        <a href="local-transfer.html" class="block text-gray-700 hover:text-primary transition-colors py-2">Local Transfer</a>
+        <a href="self-transfer.html" class="block text-gray-700 hover:text-primary transition-colors py-2">Self Transfer</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+    <div class="mb-6 md:mb-8">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Wire Transfer</h2>
+          <p class="text-sm md:text-base text-gray-600">Send money internationally to any bank account</p>
+        </div>
+        <div class="flex space-x-3">
+          <a href="dashboard.html" class="glass px-4 md:px-6 py-2 rounded-lg hover:bg-white/80 transition-all font-medium text-sm md:text-base text-gray-700">
+            Back
+          </a>
+          <a href="transactions-history.html" class="bg-secondary text-white px-4 md:px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm md:text-base shadow-lg">
+            View History
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE + BALANCE -->
+    <div class="grid md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+      <div class="glass rounded-2xl p-6 shadow-lg">
+        <div class="flex items-center space-x-4">
+          <img id="userImage" src="icons/placeholder.png" alt="User" class="w-14 h-14 rounded-full border-2 border-primary/20">
+          <div class="flex-1">
+            <p class="text-sm text-gray-600">Account Holder</p>
+            <p id="fullName" class="text-lg font-bold text-gray-900">
+              <span class="skeleton" style="height:1.25rem;width:60%"></span>
+            </p>
+            <p id="userEmail" class="text-xs text-gray-500">
+              <span class="skeleton" style="height:1rem;width:10rem"></span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="md:col-span-2 glass-dark rounded-2xl p-6 shadow-lg cursor-pointer transition-all hover:shadow-xl" id="balanceCard">
+        <div class="flex justify-between items-start mb-4">
+          <div class="flex-1">
+            <p class="text-sm text-gray-600 mb-1" id="balanceLabel">Current Balance</p>
+            <p id="balanceAmount" class="text-3xl font-bold text-primary">
+              <span class="skeleton" style="height:1.75rem;width:12rem"></span>
+            </p>
+          </div>
+          <button id="switchAccountBtn" class="glass px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all">
+            Switch to Savings
+          </button>
+        </div>
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-500">Available for transfer • Click to toggle visibility</p>
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM -->
+    <div class="glass rounded-2xl shadow-xl border border-gray-200/50 p-4 md:p-8">
+      <form id="wireTransferForm" class="space-y-4 md:space-y-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Transfer From</label>
+          <select id="fromAccount" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white">
+            <option value="">Select Account</option>
+            <option value="current">Current Account</option>
+            <option value="savings">Savings Account</option>
+          </select>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4 md:gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Account Name</label>
+            <input type="text" id="accountName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all" placeholder="John Doe">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
+            <input type="text" id="accountNumber" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all" placeholder="1234567890">
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4 md:gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
+            <input type="text" id="bankName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all" placeholder="Recipient bank name">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Bank Country</label>
+            <input type="text" id="bankCountry" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all" placeholder="Country">
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4 md:gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Routing Number / Bank Code</label>
+            <input type="text" id="routingNumber" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all" placeholder="e.g., 026009593">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+            <div class="relative">
+              <span id="currencySign" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">$</span>
+              <input type="number" id="amount" required step="0.01" min="0.01"
+                     class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                     placeholder="0.00">
+            </div>
+            <p id="feeHint" class="mt-2 text-xs text-gray-500 hidden"></p>
+          </div>
+        </div>
+
+        <!-- ✅ SECURITY CODES (IMF/COT/TAX) -->
+        <div id="codesSection" class="hidden">
+          <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <p class="text-sm text-amber-900 font-medium">Additional security codes may be required by the bank.</p>
+            <p class="text-xs text-amber-800 mt-1" id="codesHintText">Fill the required codes below.</p>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-4 mt-4">
+            <div id="imfWrap" class="hidden">
+              <label class="block text-sm font-medium text-gray-700 mb-2">IMF Code</label>
+              <input type="text" id="imfCode"
+                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                     placeholder="Enter IMF code">
+              <p class="mt-1 text-xs text-gray-500" id="imfReqText"></p>
+            </div>
+
+            <div id="cotWrap" class="hidden">
+              <label class="block text-sm font-medium text-gray-700 mb-2">COT Code</label>
+              <input type="text" id="cotCode"
+                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                     placeholder="Enter COT code">
+              <p class="mt-1 text-xs text-gray-500" id="cotReqText"></p>
+            </div>
+
+            <div id="taxWrap" class="hidden">
+              <label class="block text-sm font-medium text-gray-700 mb-2">TAX Code</label>
+              <input type="text" id="taxCode"
+                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                     placeholder="Enter TAX code">
+              <p class="mt-1 text-xs text-gray-500" id="taxReqText"></p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Transfer</label>
+          <textarea id="reason" rows="2" required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    placeholder="Payment for services"></textarea>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="flex items-start">
+            <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div class="text-sm text-blue-800">
+              <p class="font-medium mb-1">Security Verification</p>
+              <p id="securityInfoText">You may be asked to confirm this transfer with an OTP and your PIN.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+          <button type="submit" id="submitBtn"
+                  class="flex-1 bg-primary text-white py-3 rounded-lg hover:bg-blue-900 transition-colors font-medium shadow-lg flex items-center justify-center space-x-2">
+            <svg id="btnSpinner" class="hidden w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span id="btnText">Continue</span>
+          </button>
+
+          <a href="dashboard.html" class="flex-1 glass py-3 rounded-lg hover:bg-white/80 transition-all font-medium text-center text-gray-700">
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- ✅ MESSAGE MODAL (MODULE) -->
+  <div id="messageModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[120] flex items-center justify-center p-4">
+    <div class="glass rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-8 pop-in">
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <div class="flex items-center gap-3">
+          <div id="mmIconWrap" class="w-10 h-10 rounded-full flex items-center justify-center bg-red-50 border border-red-200">
+            <svg id="mmIcon" class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
+          </div>
+          <div>
+            <h3 id="mmTitle" class="text-lg font-bold text-gray-900">Error</h3>
+            <p id="mmSubtitle" class="text-xs text-gray-500">Please review and try again.</p>
+          </div>
+        </div>
+        <button id="closeMessageModal" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="bg-white/60 border border-white/70 rounded-xl p-4">
+        <p id="mmMessage" class="text-sm text-gray-800 leading-relaxed">—</p>
+      </div>
+
+      <div class="mt-5 flex gap-3">
+        <button id="mmPrimaryBtn" class="flex-1 bg-primary text-white py-3 rounded-lg hover:bg-blue-900 transition-colors font-medium shadow-lg">
+          Okay
+        </button>
+        <button id="mmSecondaryBtn" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium hidden">
+          Secondary
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIN MODAL -->
+  <div id="pinModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="glass rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-8 animate-fade-in">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-gray-900">Confirm with Transaction PIN</h3>
+        <button class="close-modal text-gray-400 hover:text-gray-600 transition-colors" data-close="pinModal" aria-label="Close">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div class="flex items-start">
+            <svg class="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+            </svg>
+            <div class="text-sm text-green-800">
+              <p class="font-medium">Enter your 6-digit PIN to continue</p>
+              <p class="mt-1">If OTP is enabled, we’ll send it to your email after this step.</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Transaction PIN</label>
+          <input type="password" id="pin" inputmode="numeric" maxlength="6"
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                 placeholder="Enter 6-digit PIN">
+        </div>
+
+        <div class="flex space-x-3 pt-2">
+          <button id="confirmPin"
+                  class="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium shadow-lg flex items-center justify-center space-x-2">
+            <svg id="pinSpinner" class="hidden w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span id="pinBtnText">Authorize</span>
+          </button>
+
+          <button class="cancel-modal flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  data-close="pinModal">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OTP MODAL -->
+  <div id="otpModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="glass rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-8 animate-fade-in">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-gray-900">Confirm with OTP</h3>
+        <button class="close-modal text-gray-400 hover:text-gray-600 transition-colors" data-close="otpModal" aria-label="Close">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div class="flex items-start">
+            <svg class="w-5 h-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            <div class="text-sm text-amber-800">
+              <p class="font-medium">We sent a 6-digit OTP to your email</p>
+              <p class="mt-1" id="otpMetaText">Enter it below to confirm this transfer.</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">OTP Code</label>
+          <input type="text" id="otp" inputmode="numeric" maxlength="6"
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                 placeholder="Enter 6-digit OTP">
+          <p class="mt-2 text-xs text-gray-500" id="otpExpiryHint"></p>
+        </div>
+
+        <div class="flex space-x-3 pt-2">
+          <button id="verifyOtpBtn"
+                  class="flex-1 bg-amber-600 text-white py-3 rounded-lg hover:bg-amber-700 transition-colors font-medium shadow-lg flex items-center justify-center space-x-2">
+            <svg id="otpSpinner" class="hidden w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span id="otpBtnText">Verify OTP</span>
+          </button>
+
+          <button id="resendOtpBtn"
+                  class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+            Resend OTP
+          </button>
+        </div>
+
+        <p class="text-xs text-gray-500" id="resendHint"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================
+    // CONFIG
+    // =========================
+    const API_BASE_URL = window.getApiBaseUrl("user");
+
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    if (!token || !user.id) window.location.href = "../auth/login.html";
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+    // =========================
+    // STATE
+    // =========================
+    let actualCurrentBalance = 0;
+    let actualSavingsBalance = 0;
+    let currentAccountType = "current";
+    let isBalanceVisible = true;
+    let currencySign = "$";
+    let wireFee = 0;
+
+    let codesRequired = { imf: false, cot: false, tax: false };
+
+    let transferFormData = null;
+    let pendingTransferId = null;
+    let otpExpiresMinutes = null;
+    let adminConfirmEnabled = false;
+
+    // =========================
+    // PRELOADER CONTROL
+    // =========================
+    const preloader = document.getElementById("preloader");
+    const preProg = document.getElementById("preProg");
+    const prePct = document.getElementById("prePct");
+    const preStatus = document.getElementById("preStatus");
+
+    let preP = 0;
+    let preTimer = null;
+    let preDone = false;
+
+    function startPreloader() {
+      // simulate progress until data loads
+      preP = 0;
+      preDone = false;
+      preProg.style.width = "0%";
+      prePct.textContent = "0%";
+      preStatus.textContent = "Loading secure transfer tools…";
+
+      const steps = [
+        { at: 15, text: "Checking session & security…" },
+        { at: 35, text: "Fetching profile & balances…" },
+        { at: 60, text: "Loading fee & verification rules…" },
+        { at: 82, text: "Preparing transfer form…" },
+      ];
+
+      preTimer = setInterval(() => {
+        if (preDone) return;
+        preP += Math.random() * 7 + 3; // 3–10
+        if (preP > 92) preP = 92; // stop near end until real done
+        preProg.style.width = `${Math.floor(preP)}%`;
+        prePct.textContent = `${Math.floor(preP)}%`;
+
+        for (const s of steps) {
+          if (Math.floor(preP) === s.at) preStatus.textContent = s.text;
+        }
+      }, 240);
+    }
+
+    function finishPreloader() {
+      if (preDone) return;
+      preDone = true;
+      if (preTimer) clearInterval(preTimer);
+
+      preProg.style.width = "100%";
+      prePct.textContent = "100%";
+      preStatus.textContent = "Ready.";
+
+      setTimeout(() => {
+        preloader.classList.add("fade-out");
+        setTimeout(() => {
+          preloader.style.display = "none";
+        }, 220);
+      }, 180);
+    }
+
+    // Always start it immediately
+    startPreloader();
+
+    // Safety: if something hangs, hide after 6s
+    setTimeout(() => finishPreloader(), 6000);
+
+    // =========================
+    // MESSAGE MODAL (module)
+    // =========================
+    const messageModal = document.getElementById("messageModal");
+    const mmTitle = document.getElementById("mmTitle");
+    const mmSubtitle = document.getElementById("mmSubtitle");
+    const mmMessage = document.getElementById("mmMessage");
+    const mmPrimaryBtn = document.getElementById("mmPrimaryBtn");
+    const mmSecondaryBtn = document.getElementById("mmSecondaryBtn");
+    const mmIconWrap = document.getElementById("mmIconWrap");
+    const mmIcon = document.getElementById("mmIcon");
+    const closeMessageModalBtn = document.getElementById("closeMessageModal");
+
+    function openMessageModal({
+      title = "Error",
+      subtitle = "Please review and try again.",
+      message = "Something went wrong.",
+      type = "error",
+      primaryText = "Okay",
+      onPrimary = null,
+      secondaryText = "",
+      onSecondary = null,
+    } = {}) {
+      mmTitle.textContent = title;
+      mmSubtitle.textContent = subtitle;
+      mmMessage.textContent = String(message || "").trim() || "Something went wrong.";
+
+      if (type === "success") {
+        mmIconWrap.className = "w-10 h-10 rounded-full flex items-center justify-center bg-green-50 border border-green-200";
+        mmIcon.className = "w-5 h-5 text-green-600";
+        mmIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+      } else if (type === "info") {
+        mmIconWrap.className = "w-10 h-10 rounded-full flex items-center justify-center bg-blue-50 border border-blue-200";
+        mmIcon.className = "w-5 h-5 text-blue-600";
+        mmIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+      } else {
+        mmIconWrap.className = "w-10 h-10 rounded-full flex items-center justify-center bg-red-50 border border-red-200";
+        mmIcon.className = "w-5 h-5 text-red-600";
+        mmIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+      }
+
+      mmPrimaryBtn.textContent = primaryText;
+      mmPrimaryBtn.onclick = () => {
+        closeMessageModal();
+        if (typeof onPrimary === "function") onPrimary();
+      };
+
+      if (secondaryText) {
+        mmSecondaryBtn.classList.remove("hidden");
+        mmSecondaryBtn.textContent = secondaryText;
+        mmSecondaryBtn.onclick = () => {
+          closeMessageModal();
+          if (typeof onSecondary === "function") onSecondary();
+        };
+      } else {
+        mmSecondaryBtn.classList.add("hidden");
+        mmSecondaryBtn.onclick = null;
+      }
+
+      messageModal.classList.remove("hidden");
+    }
+
+    function closeMessageModal() {
+      messageModal.classList.add("hidden");
+    }
+
+    closeMessageModalBtn.addEventListener("click", closeMessageModal);
+    messageModal.addEventListener("click", (e) => { if (e.target === messageModal) closeMessageModal(); });
+
+    function apiErrMsg(err, fallback) {
+      const m = err?.response?.data?.error || err?.response?.data?.message || err?.response?.data?.details;
+      return String(m || err?.message || fallback || "Request failed");
+    }
+
+    // ✅ sanitize backend messages so users NEVER see admin/otp details
+    function userSafeMessage(msg, status) {
+      const s = String(status || "").toLowerCase();
+
+      if (s === "completed") return "Wire transfer completed.";
+      if (s === "pending_admin") return "Wire transfer submitted. Awaiting confirmation.";
+      if (s === "processing") return "Wire transfer processing…";
+      if (String(msg || "").toLowerCase().includes("otp sent")) return "OTP sent. Please verify.";
+
+      // fallback for other backend text
+      return String(msg || "Request processed.").replace(/\(.*?\)/g, "").trim();
+    }
+
+    // =========================
+    // UI HELPERS
+    // =========================
+    function formatNumber(num) {
+      const n = Number(num || 0);
+      return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function setMiniLoading(btnId, spinnerId, textId, loading, loadingText, idleText) {
+      const btn = document.getElementById(btnId);
+      const sp = document.getElementById(spinnerId);
+      const tx = document.getElementById(textId);
+      if (!btn || !sp || !tx) return;
+
+      if (loading) {
+        btn.disabled = true;
+        btn.classList.add("opacity-75", "cursor-not-allowed");
+        sp.classList.remove("hidden");
+        tx.textContent = loadingText || "Processing...";
+      } else {
+        btn.disabled = false;
+        btn.classList.remove("opacity-75", "cursor-not-allowed");
+        sp.classList.add("hidden");
+        tx.textContent = idleText || "Continue";
+      }
+    }
+    function updateBalanceDisplay() {
+      const balanceLabel = document.getElementById("balanceLabel");
+      const balanceAmount = document.getElementById("balanceAmount");
+      const switchBtn = document.getElementById("switchAccountBtn");
+
+      if (currentAccountType === "current") {
+        balanceLabel.textContent = "Current Balance";
+        balanceAmount.textContent = isBalanceVisible ? `${currencySign}${formatNumber(actualCurrentBalance)}` : "••••••";
+        switchBtn.textContent = "Switch to Savings";
+      } else {
+        balanceLabel.textContent = "Savings Balance";
+        balanceAmount.textContent = isBalanceVisible ? `${currencySign}${formatNumber(actualSavingsBalance)}` : "••••••";
+        switchBtn.textContent = "Switch to Current";
+      }
+    }
+    function openModal(id) { document.getElementById(id)?.classList.remove("hidden"); }
+    function closeModal(id) { document.getElementById(id)?.classList.add("hidden"); }
+
+    function applyCodeRequirementsUI(reqs) {
+      const sec = document.getElementById("codesSection");
+      const imfWrap = document.getElementById("imfWrap");
+      const cotWrap = document.getElementById("cotWrap");
+      const taxWrap = document.getElementById("taxWrap");
+
+      const imfReqText = document.getElementById("imfReqText");
+      const cotReqText = document.getElementById("cotReqText");
+      const taxReqText = document.getElementById("taxReqText");
+
+      const hasAny = !!(reqs?.imf || reqs?.cot || reqs?.tax);
+
+      if (!hasAny) {
+        sec.classList.add("hidden");
+        imfWrap.classList.add("hidden");
+        cotWrap.classList.add("hidden");
+        taxWrap.classList.add("hidden");
+        return;
+      }
+
+      sec.classList.remove("hidden");
+
+      if (reqs.imf) { imfWrap.classList.remove("hidden"); imfReqText.textContent = "Required"; } else imfWrap.classList.add("hidden");
+      if (reqs.cot) { cotWrap.classList.remove("hidden"); cotReqText.textContent = "Required"; } else cotWrap.classList.add("hidden");
+      if (reqs.tax) { taxWrap.classList.remove("hidden"); taxReqText.textContent = "Required"; } else taxWrap.classList.add("hidden");
+    }
+
+    // =========================
+    // NAV EVENTS
+    // =========================
+    document.getElementById("mobileMenuBtn").addEventListener("click", () => {
+      document.getElementById("mobileMenu").classList.toggle("hidden");
+    });
+
+    document.getElementById("balanceCard").addEventListener("click", (e) => {
+      if (e.target.id === "switchAccountBtn" || e.target.closest("#switchAccountBtn")) return;
+      isBalanceVisible = !isBalanceVisible;
+      updateBalanceDisplay();
+    });
+
+    document.getElementById("switchAccountBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      currentAccountType = currentAccountType === "current" ? "savings" : "current";
+      updateBalanceDisplay();
+    });
+
+    document.querySelectorAll(".close-modal, .cancel-modal").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-close");
+        if (id) closeModal(id);
+      });
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "../auth/login.html";
+    });
+
+    // =========================
+    // LOADERS
+    // =========================
+    async function loadUserInfo() {
+      const profileRes = await axios.get(`${API_BASE_URL}/profile`);
+      const balanceRes = await axios.get(`${API_BASE_URL}/balance/total`);
+
+      const profile = profileRes.data.user;
+      const balance = balanceRes.data;
+
+      document.getElementById("userName").textContent = profile.username || "User";
+      document.getElementById("fullName").textContent = profile.full_name || "N/A";
+      document.getElementById("userEmail").textContent = profile.email || "N/A";
+
+      currencySign = profile.currency_sign || "$";
+      document.getElementById("currencySign").textContent = currencySign;
+
+      actualCurrentBalance = parseFloat(balance.current_balance || 0);
+      actualSavingsBalance = parseFloat(balance.savings_balance || 0);
+      updateBalanceDisplay();
+
+      if (profile.profile_image_url) {
+        const imageUrl = window.getApiAssetUrl(profile.profile_image_url);
+        document.getElementById("userImage").src = imageUrl;
+      }
+    }
+
+    async function loadWireFeeAndSecurityText() {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/security-codes/requirements`);
+
+        wireFee = Number(res.data?.fee || 0);
+        const req = res.data?.requirements || res.data?.codes_required || null;
+
+        const reqs = {
+          imf: !!(req?.require_imf ?? req?.imf ?? false),
+          cot: !!(req?.require_cot ?? req?.cot ?? false),
+          tax: !!(req?.require_tax ?? req?.tax ?? false),
+        };
+
+        codesRequired = reqs;
+        applyCodeRequirementsUI(reqs);
+
+        const info = document.getElementById("securityInfoText");
+        const feeHint = document.getElementById("feeHint");
+
+        if (wireFee > 0) {
+          info.textContent = `You may be asked to confirm this transfer with an OTP and your PIN. Fee: ${currencySign}${formatNumber(wireFee)}.`;
+          feeHint.classList.remove("hidden");
+          feeHint.textContent = `Estimated fee: ${currencySign}${formatNumber(wireFee)} (actual fee is confirmed by server).`;
+        } else {
+          info.textContent = "You may be asked to confirm this transfer with an OTP and your PIN.";
+          feeHint.classList.add("hidden");
+        }
+      } catch {
+        wireFee = 0;
+        applyCodeRequirementsUI({ imf:false, cot:false, tax:false });
+      }
+    }
+
+    // =========================
+    // FORM FLOW
+    // =========================
+    document.getElementById("wireTransferForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      transferFormData = {
+        from_account: document.getElementById("fromAccount").value,
+        account_name: document.getElementById("accountName").value,
+        account_number: document.getElementById("accountNumber").value,
+        bank_name: document.getElementById("bankName").value,
+        bank_country: document.getElementById("bankCountry").value,
+        routine_number: document.getElementById("routingNumber").value,
+        amount: parseFloat(document.getElementById("amount").value),
+        reason: document.getElementById("reason").value,
+        imf_code: String(document.getElementById("imfCode")?.value || "").trim() || undefined,
+        cot_code: String(document.getElementById("cotCode")?.value || "").trim() || undefined,
+        tax_code: String(document.getElementById("taxCode")?.value || "").trim() || undefined,
+      };
+
+      if (!transferFormData.from_account) return openMessageModal({ title: "Missing Field", message: "Please select an account to transfer from." });
+      if (!Number.isFinite(transferFormData.amount) || transferFormData.amount <= 0) return openMessageModal({ title: "Invalid Amount", message: "Enter a valid amount greater than 0." });
+      if (!String(transferFormData.reason || "").trim()) return openMessageModal({ title: "Missing Field", message: "Reason is required." });
+
+      if (codesRequired.imf && !transferFormData.imf_code) return openMessageModal({ title: "Missing IMF Code", message: "IMF code is required." });
+      if (codesRequired.cot && !transferFormData.cot_code) return openMessageModal({ title: "Missing COT Code", message: "COT code is required." });
+      if (codesRequired.tax && !transferFormData.tax_code) return openMessageModal({ title: "Missing TAX Code", message: "TAX code is required." });
+
+      document.getElementById("pin").value = "";
+      openModal("pinModal");
+    });
+
+    document.getElementById("confirmPin").addEventListener("click", async () => {
+      const pin = String(document.getElementById("pin").value || "").trim();
+
+      if (!/^\d{6}$/.test(pin)) {
+        openMessageModal({
+          type: "error",
+          title: "Invalid PIN",
+          subtitle: "Transaction PIN must be 6 digits.",
+          message: "Please enter your correct 6-digit PIN to continue.",
+        });
+        return;
+      }
+
+      setMiniLoading("confirmPin", "pinSpinner", "pinBtnText", true, "Authorizing...", "Authorize");
+
+      try {
+        const payload = { ...transferFormData, pin };
+        Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
+
+        const r = await axios.post(`${API_BASE_URL}/transfer/wire/initiate`, payload);
+        const data = r.data || {};
+
+        pendingTransferId = data.transfer_id || null;
+        adminConfirmEnabled = !!data.admin_confirm_enabled;
+
+        if (data.otp_enabled) {
+          otpExpiresMinutes = data.otp_expires_in_minutes ?? null;
+
+          closeModal("pinModal");
+          document.getElementById("otp").value = "";
+          document.getElementById("otpExpiryHint").textContent = otpExpiresMinutes ? `OTP expires in ${otpExpiresMinutes} minute(s).` : "";
+          document.getElementById("otpMetaText").textContent = `Enter the 6-digit OTP to confirm this wire transfer. Transfer ID: #${pendingTransferId || "—"}`;
+          document.getElementById("resendHint").textContent = "";
+          openModal("otpModal");
+
+          setMiniLoading("confirmPin", "pinSpinner", "pinBtnText", false, "Authorizing...", "Authorize");
+          return;
+        }
+
+        const status = String(data.status || "processing").toLowerCase();
+        const safeMsg = userSafeMessage(data.message, status);
+
+        const transferDetails = {
+          ...transferFormData,
+          pin: "******",
+          transfer_id: pendingTransferId,
+          otp_enabled: false,
+          admin_confirm_enabled: adminConfirmEnabled,
+          status,
+          timestamp: new Date().toISOString(),
+          message: safeMsg,
+        };
+        localStorage.setItem("lastTransfer", JSON.stringify(transferDetails));
+        closeModal("pinModal");
+
+        const isCompleted = status === "completed";
+        openMessageModal({
+          type: isCompleted ? "success" : "info",
+          title: isCompleted ? "Transfer Completed" : "Transfer Submitted",
+          subtitle: isCompleted ? "Your wire transfer is complete." : "Awaiting confirmation.",
+          message: safeMsg,
+          primaryText: "View Receipt",
+          onPrimary: () => window.location.href = "receipt.html",
+          secondaryText: "Back to Dashboard",
+          onSecondary: () => window.location.href = "dashboard.html",
+        });
+      } catch (error) {
+        openMessageModal({
+          type: "error",
+          title: "Transfer Failed",
+          subtitle: "Please check your details.",
+          message: apiErrMsg(error, "Failed to initiate wire transfer"),
+        });
+        setMiniLoading("confirmPin", "pinSpinner", "pinBtnText", false, "Authorizing...", "Authorize");
+      }
+    });
+
+    document.getElementById("verifyOtpBtn").addEventListener("click", async () => {
+      const otp = String(document.getElementById("otp").value || "").trim();
+
+      if (!pendingTransferId) {
+        openMessageModal({ title: "No Transfer Found", message: "Missing transfer reference. Please start again." });
+        closeModal("otpModal");
+        return;
+      }
+      if (!/^\d{6}$/.test(otp)) return openMessageModal({ title: "Invalid OTP", message: "Enter a valid 6-digit OTP." });
+
+      setMiniLoading("verifyOtpBtn", "otpSpinner", "otpBtnText", true, "Verifying...", "Verify OTP");
+
+      try {
+        const r = await axios.post(`${API_BASE_URL}/transfer/wire/verify`, { transfer_id: pendingTransferId, otp });
+        const data = r.data || {};
+        const status = String(data.status || data.current_status || "processing").toLowerCase();
+        const safeMsg = userSafeMessage(data.message, status);
+
+        const transferDetails = {
+          ...transferFormData,
+          pin: "******",
+          transfer_id: pendingTransferId,
+          otp_enabled: true,
+          otp_status: data.otp_status || "verified",
+          admin_confirm_enabled: !!data.admin_confirm_enabled,
+          status,
+          timestamp: new Date().toISOString(),
+          message: safeMsg,
+        };
+
+        localStorage.setItem("lastTransfer", JSON.stringify(transferDetails));
+        closeModal("otpModal");
+
+        const isCompleted = status === "completed";
+        openMessageModal({
+          type: isCompleted ? "success" : "info",
+          title: "OTP Verified",
+          subtitle: isCompleted ? "Transfer completed successfully." : "Awaiting confirmation.",
+          message: safeMsg,
+          primaryText: "View Receipt",
+          onPrimary: () => window.location.href = "receipt.html",
+          secondaryText: "Back to Dashboard",
+          onSecondary: () => window.location.href = "dashboard.html",
+        });
+      } catch (error) {
+        openMessageModal({
+          type: "error",
+          title: "OTP Failed",
+          subtitle: "Please check the code and try again.",
+          message: apiErrMsg(error, "OTP verification failed"),
+          primaryText: "Okay",
+          secondaryText: "Resend OTP",
+          onSecondary: () => document.getElementById("resendOtpBtn").click(),
+        });
+        setMiniLoading("verifyOtpBtn", "otpSpinner", "otpBtnText", false, "Verifying...", "Verify OTP");
+      }
+    });
+
+    document.getElementById("resendOtpBtn").addEventListener("click", async () => {
+      if (!pendingTransferId) return openMessageModal({ title: "No Transfer Found", message: "Missing transfer reference. Please start again." });
+
+      const btn = document.getElementById("resendOtpBtn");
+      btn.disabled = true;
+      btn.classList.add("opacity-75", "cursor-not-allowed");
+      document.getElementById("resendHint").textContent = "Requesting a new OTP...";
+
+      try {
+        const r = await axios.post(`${API_BASE_URL}/transfer/wire/resend-otp`, { transfer_id: pendingTransferId });
+        document.getElementById("resendHint").textContent =
+          (r.data?.message || "OTP resent.") +
+          (r.data?.otp_expires_in_minutes ? ` Expires in ${r.data.otp_expires_in_minutes} minute(s).` : "");
+
+        let cooldown = Number(r.data?.retry_after_seconds || 60);
+        btn.textContent = `Resend in ${cooldown}s`;
+
+        const t = setInterval(() => {
+          cooldown -= 1;
+          if (cooldown <= 0) {
+            clearInterval(t);
+            btn.disabled = false;
+            btn.classList.remove("opacity-75", "cursor-not-allowed");
+            btn.textContent = "Resend OTP";
+          } else {
+            btn.textContent = `Resend in ${cooldown}s`;
+          }
+        }, 1000);
+      } catch (error) {
+        const msg = apiErrMsg(error, "Failed to resend OTP");
+        const retry = error?.response?.data?.retry_after_seconds;
+
+        openMessageModal({
+          type: "error",
+          title: "Resend Failed",
+          subtitle: "Please try again later.",
+          message: retry ? `${msg}. Try again in ${retry}s.` : msg,
+        });
+
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.classList.remove("opacity-75", "cursor-not-allowed");
+          btn.textContent = "Resend OTP";
+        }, 1400);
+      }
+    });
+
+    // =========================
+    // INIT
+    // =========================
+    (async function init() {
+      try {
+        preStatus.textContent = "Fetching profile & balances…";
+        await loadUserInfo();
+        preStatus.textContent = "Loading fee & verification rules…";
+        await loadWireFeeAndSecurityText();
+      } catch (e) {
+        // show modal if init fails, but still hide loader so user can log out etc.
+        openMessageModal({
+          type: "error",
+          title: "Initialization Failed",
+          subtitle: "We couldn't load everything.",
+          message: apiErrMsg(e, "Please refresh or login again."),
+        });
+      } finally {
+        finishPreloader();
+      }
+    })();
+  </script>
+</body>
+</html>

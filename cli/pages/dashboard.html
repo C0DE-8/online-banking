@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Fconvenience bank</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a',
+                        secondary: '#3b82f6',
+                        accent: '#60a5fa',
+                        dark: '#0f172a',
+                        light: '#f8fafc',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        
+        .skeleton-loader {
+            background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+            border-radius: 0.5rem;
+            display: inline-block;
+        }
+        
+        .skeleton-loader-light {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+            border-radius: 0.5rem;
+            display: inline-block;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-light min-h-screen">
+  
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-primary">Da paystrix</h1>
+                    <div class="hidden lg:block ml-10">
+                        <div class="flex items-baseline space-x-4">
+                            <a href="dashboard.html" class="text-primary font-medium border-b-2 border-primary pb-1 px-3 py-2">Dashboard</a>
+                            <a href="wire-transfer.html" class="text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors px-3 py-2 rounded-md">Wire Transfer</a>
+                            <a href="local-transfer.html" class="text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors px-3 py-2 rounded-md">Local Transfer</a>
+                            <a href="self-transfer.html" class="text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors px-3 py-2 rounded-md">Self Transfer</a>
+                            <a href="transactions-history.html" class="text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors px-3 py-2 rounded-md">Transactions</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button id="userMenuButton" class="flex items-center space-x-3 hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors">
+                            <img id="profileImage" src="/placeholder.svg" alt="Profile" class="w-10 h-10 rounded-full border-2 border-primary hidden">
+                            <div class="hidden md:block text-left">
+                                <p id="userName" class="text-sm font-medium text-gray-900"></p>
+                                <p class="text-xs text-gray-500">View Profile</p>
+                            </div>
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="userDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
+                            <a href="settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    Settings
+                                </div>
+                            </a>
+                            <a href="transactions-history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    Statements
+                                </div>
+                            </a>
+                            <hr class="my-2">
+                            <button id="logoutButton" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                    </svg>
+                                    Logout
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    <button id="mobileMenuButton" class="lg:hidden text-gray-700 hover:text-primary">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobileMenu" class="hidden lg:hidden border-t border-gray-200 bg-white">
+            <div class="px-4 py-3 space-y-2">
+                <a href="dashboard.html" class="block text-primary font-medium px-3 py-2 rounded-md bg-blue-50">Dashboard</a>
+                <a href="wire-transfer.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Wire Transfer</a>
+                <a href="local-transfer.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Local Transfer</a>
+                <a href="self-transfer.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Self Transfer</a>
+                <a href="transactions-history.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Transactions</a>
+                <a href="settings.html" class="block text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">Settings</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Welcome back, <span id="userFullName"></span>!</h2>
+            <p class="text-gray-600">Here's an overview of your accounts</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div class="relative bg-gradient-to-br from-primary via-blue-800 to-blue-900 rounded-2xl p-6 text-white shadow-2xl overflow-hidden backdrop-blur-xl cursor-pointer" id="totalBalanceCard">
+                <div class="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+                <div class="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -mr-20 -mt-20"></div>
+                <div class="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-16 -mb-16"></div>
+                
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <p class="text-blue-100 text-sm mb-1 font-medium">Total Balance</p>
+                            <p class="text-xs text-blue-200">All Accounts • Click to toggle</p>
+                        </div>
+                        <svg class="w-10 h-10 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="mt-8">
+                        <p class="text-4xl font-bold mb-1" id="totalBalance">
+                            <span class="skeleton-loader" style="width: 180px; height: 40px;"></span>
+                        </p>
+                        <div class="flex items-center space-x-4 mt-4 text-sm">
+                            <div>
+                                <p class="text-blue-200 text-xs">Checking</p>
+                                <p class="font-semibold" id="currentBalance">
+                                    <span class="skeleton-loader" style="width: 100px; height: 20px;"></span>
+                                </p>
+                            </div>
+                            <div class="h-8 w-px bg-white/30"></div>
+                            <div>
+                                <p class="text-blue-200 text-xs">Savings</p>
+                                <p class="font-semibold" id="savingsBalance">
+                                    <span class="skeleton-loader" style="width: 100px; height: 20px;"></span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 text-white shadow-2xl overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-orange-500/10"></div>
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
+                
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-8">
+                        <div>
+                            <p class="text-gray-300 text-xs mb-1 font-medium">ATM CARD</p>
+                            <p class="text-xs text-gray-400" id="cardStatus">
+                                <span class="skeleton-loader" style="width: 80px; height: 16px;"></span>
+                            </p>
+                        </div>
+                        <svg class="w-10 h-10 text-yellow-400/80" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 6v6h16v-6H4z"/>
+                        </svg>
+                    </div>
+                    <div class="mt-6">
+                        <p class="text-xl font-mono tracking-wider mb-4" id="cardNumber">
+                            <span class="skeleton-loader" style="width: 220px; height: 24px;"></span>
+                        </p>
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">CARD HOLDER</p>
+                                <p class="text-sm font-medium" id="cardHolder">
+                                    <span class="skeleton-loader" style="width: 120px; height: 18px;"></span>
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">EXPIRES</p>
+                                <p class="text-sm font-medium" id="cardExpiry">
+                                    <span class="skeleton-loader" style="width: 50px; height: 18px;"></span>
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">CVV</p>
+                                <div class="flex items-center space-x-2">
+                                    <p class="text-sm font-medium font-mono" id="cardCVV">•••</p>
+                                    <button id="toggleCVV" class="text-gray-400 hover:text-white transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
+                <div class="space-y-3">
+                    <a href="deposit.html" class="block w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm text-center">
+                        Deposit Funds
+                    </a>
+                    <a href="wire-transfer.html" class="block w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-900 transition-colors font-medium text-sm text-center">
+                        Wire Transfer
+                    </a>
+                    <a href="local-transfer.html" class="block w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm text-center">
+                        Local Transfer
+                    </a>
+                    <a href="self-transfer.html" class="block w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm text-center">
+                        Self Transfer
+                    </a>
+                    <a href="transactions-history.html" class="block w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm text-center">
+                        View Statements
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Recent Transactions</h3>
+            
+            <div class="flex space-x-1 mb-6 border-b border-gray-200">
+                <button class="tab-button px-4 py-2 font-medium text-sm transition-colors border-b-2 border-primary text-primary" data-tab="all">
+                    All
+                </button>
+                <button class="tab-button px-4 py-2 font-medium text-sm transition-colors border-b-2 border-transparent text-gray-600 hover:text-gray-900" data-tab="wire">
+                    Wire
+                </button>
+                <button class="tab-button px-4 py-2 font-medium text-sm transition-colors border-b-2 border-transparent text-gray-600 hover:text-gray-900" data-tab="local">
+                    Local
+                </button>
+                <button class="tab-button px-4 py-2 font-medium text-sm transition-colors border-b-2 border-transparent text-gray-600 hover:text-gray-900" data-tab="self">
+                    Self
+                </button>
+            </div>
+
+            <div id="transactionsList" class="space-y-4">
+                <div class="text-center py-8 text-gray-500">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p>Loading transactions...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Account Status Overlay -->
+    <div id="statusOverlay" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl max-w-md w-full mx-4 p-6 shadow-2xl text-center">
+        <h2 id="statusTitle" class="text-xl font-bold text-gray-900 mb-2">Account Status</h2>
+        <p id="statusMessage" class="text-sm text-gray-600 mb-4">
+          Checking your account status...
+        </p>
+
+        <div id="statusSpinner" class="flex items-center justify-center mb-4 hidden">
+          <svg class="w-8 h-8 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+        </div>
+
+        <div class="flex justify-center flex-wrap gap-3">
+          <button id="statusSupportBtn"
+                  class="hidden px-4 py-2 rounded-lg bg-secondary text-white text-sm font-medium hover:bg-blue-700 transition-colors">
+            Contact Support
+          </button>
+          <button id="statusContinueBtn"
+                  class="hidden px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-blue-900 transition-colors">
+            OK, Continue
+          </button>
+          <button id="statusLogoutBtn"
+                  class="hidden px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.getApiBaseUrl("user");
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        if (!token || !user.id) {
+            window.location.href = '../auth/login.html';
+        }
+
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        let cardCVVValue = '•••';
+        let isCVVVisible = false;
+        let allWireTransactions = [];
+        let allLocalTransactions = [];
+        let allSelfTransactions = [];
+        let currentTab = 'all';
+        let actualTotalBalance = 0;
+        let actualCurrentBalance = 0;
+        let actualSavingsBalance = 0;
+        let isBalanceVisible = true;
+        let currencySign = '$';
+
+        function formatNumber(number) {
+            const num = parseFloat(number);
+            if (isNaN(num)) return '0.00';
+            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        // Robust amount parsing (keeps only digits/dot/minus)
+        function parseAmount(raw) {
+            const s = String(raw ?? '').trim();
+            const n = parseFloat(s.replace(/[^0-9.-]/g, ''));
+            return Number.isFinite(n) ? n : 0;
+        }
+
+        // Direction logic:
+        // - wire/local: use entry_type enum('credit','debit')
+        // - self: internal transfer (you -> you)
+        function getTxDirection(tx) {
+            if (tx.type === 'self') return 'internal';
+            const et = String(tx.entry_type || '').toLowerCase();
+            if (et === 'debit') return 'debit';
+            if (et === 'credit') return 'credit';
+            // fallback if backend didn't send entry_type
+            const amt = parseAmount(tx.amount);
+            return amt < 0 ? 'debit' : 'credit';
+        }
+
+        function getDirectionUI(direction) {
+            if (direction === 'debit') {
+                return {
+                    iconBg: 'bg-red-100',
+                    iconText: 'text-red-600',
+                    amountText: 'text-red-600',
+                    sign: '-',
+                    iconPath: 'M20 12H4',
+                    label: 'Debit'
+                };
+            }
+            if (direction === 'credit') {
+                return {
+                    iconBg: 'bg-green-100',
+                    iconText: 'text-green-600',
+                    amountText: 'text-green-600',
+                    sign: '+',
+                    iconPath: 'M12 4v16m8-8H4',
+                    label: 'Credit'
+                };
+            }
+            // internal
+            return {
+                iconBg: 'bg-purple-100',
+                iconText: 'text-purple-600',
+                amountText: 'text-purple-600',
+                sign: '↔',
+                iconPath: 'M7 7h10M7 17h10M10 7l-3 3m0 0l3 3m-3-3h10m0 0l-3-3m3 3l-3 3',
+                label: 'Internal'
+            };
+        }
+
+        // Central logout
+        function doLogout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '../auth/login.html';
+        }
+
+        // Overlay helpers
+        function showStatusOverlay({ title, message, showSpinner = false, allowLogout = false, allowContinue = false, allowSupport = false }) {
+            const overlay      = document.getElementById('statusOverlay');
+            const titleEl      = document.getElementById('statusTitle');
+            const msgEl        = document.getElementById('statusMessage');
+            const spinnerEl    = document.getElementById('statusSpinner');
+            const continueBtn  = document.getElementById('statusContinueBtn');
+            const logoutBtn    = document.getElementById('statusLogoutBtn');
+            const supportBtn   = document.getElementById('statusSupportBtn');
+
+            titleEl.textContent = title || 'Account Status';
+            msgEl.textContent   = message || '';
+            spinnerEl.classList.toggle('hidden', !showSpinner);
+            continueBtn.classList.toggle('hidden', !allowContinue);
+            logoutBtn.classList.toggle('hidden', !allowLogout);
+            supportBtn.classList.toggle('hidden', !allowSupport);
+
+            overlay.classList.remove('hidden');
+        }
+
+        function hideStatusOverlay() {
+            document.getElementById('statusOverlay').classList.add('hidden');
+        }
+
+        // Check acct_status and enforce rules
+        async function checkAccountStatus() {
+            try {
+                const res = await axios.get(`${API_BASE_URL}/profile/status`);
+                const status = (res.data.acct_status || '').toLowerCase();
+                console.log('Account status:', status);
+
+                switch (status) {
+                    case 'active':
+                        showStatusOverlay({
+                            title: 'Account Active',
+                            message: 'Your account is active. You can continue using all features.',
+                            showSpinner: false,
+                            allowLogout: false,
+                            allowContinue: true,
+                            allowSupport: false
+                        });
+                        break;
+
+                    case 'hold':
+                        showStatusOverlay({
+                            title: 'Account On Hold',
+                            message: 'Your account is currently on hold. Please contact support for assistance.',
+                            showSpinner: false,
+                            allowLogout: true,
+                            allowContinue: false,
+                            allowSupport: true
+                        });
+                        break;
+
+                    case 'suspended':
+                        showStatusOverlay({
+                            title: 'Account Suspended',
+                            message: 'Your account has been suspended. Please contact support for more details.',
+                            showSpinner: false,
+                            allowLogout: true,
+                            allowContinue: false,
+                            allowSupport: true
+                        });
+                        break;
+
+                    case 'pending':
+                        showStatusOverlay({
+                            title: 'Account Pending Verification',
+                            message: 'Your account is currently pending review. You will be notified once it is approved.',
+                            showSpinner: true,
+                            allowLogout: true,
+                            allowContinue: false,
+                            allowSupport: false
+                        });
+                        break;
+
+                    case 'blocked':
+                        showStatusOverlay({
+                            title: 'Account Blocked',
+                            message: 'Your account has been blocked for security reasons. You will be logged out shortly. Please contact support if you believe this is a mistake.',
+                            showSpinner: false,
+                            allowLogout: true,
+                            allowContinue: false,
+                            allowSupport: true
+                        });
+                        setTimeout(() => { doLogout(); }, 4000);
+                        break;
+
+                    case 'inactive':
+                        showStatusOverlay({
+                            title: 'Account Inactive',
+                            message: 'This account is currently inactive and cannot be used. You will be logged out. Please contact support to reactivate your account.',
+                            showSpinner: false,
+                            allowLogout: true,
+                            allowContinue: false,
+                            allowSupport: true
+                        });
+                        setTimeout(() => { doLogout(); }, 4000);
+                        break;
+
+                    default:
+                        console.warn('Unknown acct_status, treating as active:', status);
+                        break;
+                }
+            } catch (err) {
+                console.error('Failed to check account status:', err);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const continueBtn = document.getElementById('statusContinueBtn');
+            const logoutBtn   = document.getElementById('statusLogoutBtn');
+            const supportBtn  = document.getElementById('statusSupportBtn');
+
+            if (continueBtn) continueBtn.addEventListener('click', hideStatusOverlay);
+            if (logoutBtn) logoutBtn.addEventListener('click', doLogout);
+            if (supportBtn) supportBtn.addEventListener('click', () => { window.location.href = 'support.html'; });
+        });
+
+        async function loadUserProfile() {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/profile`);
+                const userData = response.data.user;
+                
+                document.getElementById('userName').textContent = userData.username || 'User';
+                document.getElementById('userFullName').textContent = userData.full_name || 'User';
+                
+                if (userData.profile_image_url) {
+                    const profileImg = document.getElementById('profileImage');
+                    const imageUrl = window.getApiAssetUrl(userData.profile_image_url);
+                    profileImg.src = imageUrl;
+                    profileImg.classList.remove('hidden');
+                }
+                
+                currencySign = userData.currency_sign || '$';
+            } catch (error) {
+                console.error('Failed to load profile:', error);
+            }
+        }
+
+        async function loadBalances() {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/balance/total`);
+                const { current_balance, savings_balance, total_balance } = response.data;
+                
+                actualTotalBalance = parseFloat(total_balance);
+                actualCurrentBalance = parseFloat(current_balance);
+                actualSavingsBalance = parseFloat(savings_balance);
+                
+                const totalBalanceEl = document.getElementById('totalBalance');
+                const currentBalanceEl = document.getElementById('currentBalance');
+                const savingsBalanceEl = document.getElementById('savingsBalance');
+                
+                totalBalanceEl.innerHTML = `${currencySign}${formatNumber(actualTotalBalance)}`;
+                currentBalanceEl.innerHTML = `${currencySign}${formatNumber(actualCurrentBalance)}`;
+                savingsBalanceEl.innerHTML = `${currencySign}${formatNumber(actualSavingsBalance)}`;
+                
+                totalBalanceEl.classList.add('fade-in');
+                currentBalanceEl.classList.add('fade-in');
+                savingsBalanceEl.classList.add('fade-in');
+            } catch (error) {
+                console.error('Failed to load balances:', error);
+                document.getElementById('totalBalance').innerHTML = 'Error';
+                document.getElementById('currentBalance').innerHTML = 'Error';
+                document.getElementById('savingsBalance').innerHTML = 'Error';
+            }
+        }
+
+        async function loadATMCard() {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/atm-card-info`);
+                const cards = response.data.cards;
+                
+                if (cards && cards.length > 0) {
+                    const card = cards[0];
+                    const cardNumberEl = document.getElementById('cardNumber');
+                    const cardHolderEl = document.getElementById('cardHolder');
+                    const cardExpiryEl = document.getElementById('cardExpiry');
+                    const cardStatusEl = document.getElementById('cardStatus');
+                    
+                    cardNumberEl.textContent = card.card_number || '•••• •••• •••• ••••';
+                    cardHolderEl.textContent = card.card_holder_name || 'Card Holder Name';
+                    cardExpiryEl.textContent = card.expiry_date || 'MM/YY';
+                    cardStatusEl.textContent = card.status || 'Active';
+                    cardCVVValue = card.cvv || '•••';
+                    document.getElementById('cardCVV').textContent = '•••';
+                    
+                    cardNumberEl.classList.add('fade-in');
+                    cardHolderEl.classList.add('fade-in');
+                    cardExpiryEl.classList.add('fade-in');
+                    cardStatusEl.classList.add('fade-in');
+                } else {
+                    document.getElementById('cardStatus').textContent = 'No card available';
+                    document.getElementById('cardNumber').textContent = '•••• •••• •••• ••••';
+                    document.getElementById('cardHolder').textContent = 'No Card';
+                    document.getElementById('cardExpiry').textContent = 'MM/YY';
+                }
+            } catch (error) {
+                console.error('Failed to load ATM card:', error);
+                document.getElementById('cardStatus').textContent = 'Error loading card';
+                document.getElementById('cardNumber').textContent = '•••• •••• •••• ••••';
+                document.getElementById('cardHolder').textContent = 'Error';
+                document.getElementById('cardExpiry').textContent = 'MM/YY';
+            }
+        }
+
+        document.getElementById('totalBalanceCard').addEventListener('click', () => {
+            isBalanceVisible = !isBalanceVisible;
+            if (isBalanceVisible) {
+                document.getElementById('totalBalance').innerHTML = `${currencySign}${formatNumber(actualTotalBalance)}`;
+                document.getElementById('currentBalance').innerHTML = `${currencySign}${formatNumber(actualCurrentBalance)}`;
+                document.getElementById('savingsBalance').innerHTML = `${currencySign}${formatNumber(actualSavingsBalance)}`;
+            } else {
+                document.getElementById('totalBalance').innerHTML = '••••••';
+                document.getElementById('currentBalance').innerHTML = '••••••';
+                document.getElementById('savingsBalance').innerHTML = '••••••';
+            }
+        });
+
+        document.getElementById('toggleCVV').addEventListener('click', () => {
+            isCVVVisible = !isCVVVisible;
+            document.getElementById('cardCVV').textContent = isCVVVisible ? cardCVVValue : '•••';
+        });
+
+        async function loadTransactions() {
+            try {
+                const [wireRes, localRes, selfRes] = await Promise.all([
+                    axios.get(`${API_BASE_URL}/transfer/history/wire`).catch(() => ({ data: { wire_history: [] } })),
+                    axios.get(`${API_BASE_URL}/transfer/history/local`).catch(() => ({ data: { history: [] } })),
+                    axios.get(`${API_BASE_URL}/transfer/self/history`).catch(() => ({ data: { history: [] } }))
+                ]);
+
+                allWireTransactions = wireRes.data.wire_history || [];
+                allLocalTransactions = localRes.data.history || [];
+                allSelfTransactions = selfRes.data.history || [];
+
+                renderTransactions(currentTab);
+            } catch (error) {
+                console.error('Failed to load transactions:', error);
+                document.getElementById('transactionsList').innerHTML = `
+                    <div class="text-center py-8 text-red-500">
+                        <p>Failed to load transactions</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderTransactions(tab) {
+            let transactions = [];
+            
+            if (tab === 'all') {
+                transactions = [
+                    ...allWireTransactions.map(t => ({ ...t, type: 'wire', date: t.date || t.created_at })),
+                    ...allLocalTransactions.map(t => ({ ...t, type: 'local', date: t.date || t.created_at })),
+                    ...allSelfTransactions.map(t => ({ ...t, type: 'self', date: t.created_at }))
+                ];
+            } else if (tab === 'wire') {
+                transactions = allWireTransactions.map(t => ({ ...t, type: 'wire', date: t.date || t.created_at }));
+            } else if (tab === 'local') {
+                transactions = allLocalTransactions.map(t => ({ ...t, type: 'local', date: t.date || t.created_at }));
+            } else if (tab === 'self') {
+                transactions = allSelfTransactions.map(t => ({ ...t, type: 'self', date: t.created_at }));
+            }
+
+            transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+            const recentTransactions = transactions.slice(0, 3);
+
+            const transactionsList = document.getElementById('transactionsList');
+            
+            if (recentTransactions.length === 0) {
+                transactionsList.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p>No transactions yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            transactionsList.innerHTML = recentTransactions.map(transaction => {
+                // ✅ FIX: use entry_type for wire/local, internal for self
+                const direction = getTxDirection(transaction);
+                const ui = getDirectionUI(direction);
+
+                let title = '';
+                let subtitle = '';
+
+                if (transaction.type === 'wire') {
+                    title = `Wire Transfer to ${transaction.account_name || transaction.bank_name || 'Recipient'}`;
+                    subtitle = transaction.bank_country || transaction.bank_name || '';
+                } else if (transaction.type === 'local') {
+                    title = `Local Transfer to ${transaction.account_name || transaction.bank_name || 'Recipient'}`;
+                    subtitle = transaction.account_number || '';
+                } else {
+                    title = `Internal Transfer`;
+                    subtitle = `${transaction.from_account || 'Current'} → ${transaction.to_account || 'Savings'}`;
+                }
+
+                const amt = Math.abs(parseAmount(transaction.amount || 0));
+                const formattedAmount = formatNumber(amt);
+                const displayAmount = `${ui.sign}${currencySign}${formattedAmount}`;
+
+                return `
+                    <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 ${ui.iconBg} rounded-full flex items-center justify-center mr-4">
+                                <svg class="w-5 h-5 ${ui.iconText}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${ui.iconPath}"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">${title}</p>
+                                <p class="text-sm text-gray-500">${subtitle}</p>
+                                <p class="text-xs text-gray-400 mt-1">${transaction.date || ''}</p>
+                                <p class="text-[11px] text-gray-400 mt-1">${ui.label}${transaction.entry_type ? ` • ${String(transaction.entry_type).toUpperCase()}` : ''}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold ${ui.amountText}">${displayAmount}</p>
+                            ${transaction.status ? `<p class="text-xs text-gray-500 mt-1">${transaction.status}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                currentTab = button.dataset.tab;
+                
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('border-primary', 'text-primary');
+                    btn.classList.add('border-transparent', 'text-gray-600');
+                });
+                
+                button.classList.remove('border-transparent', 'text-gray-600');
+                button.classList.add('border-primary', 'text-primary');
+                
+                renderTransactions(currentTab);
+            });
+        });
+
+        document.getElementById('logoutButton').addEventListener('click', doLogout);
+
+        document.getElementById('userMenuButton').addEventListener('click', () => {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('hidden');
+        });
+
+        document.getElementById('mobileMenuButton').addEventListener('click', () => {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            const userMenu = document.getElementById('userMenuButton');
+            const dropdown = document.getElementById('userDropdown');
+            if (!userMenu.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Init: enforce status first, then load rest
+        (async function initDashboard() {
+            await checkAccountStatus();
+            loadUserProfile();
+            loadBalances();
+            loadATMCard();
+            loadTransactions();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transfer Receipt - Fconvenience bank</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#1e3a8a",
+            secondary: "#3b82f6",
+            accent: "#60a5fa",
+            dark: "#0f172a",
+            light: "#f8fafc",
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* Subtle receipt paper feel */
+    .paper-bg {
+      background-image:
+        radial-gradient(rgba(59, 130, 246, 0.12) 1px, transparent 1px),
+        radial-gradient(rgba(30, 58, 138, 0.08) 1px, transparent 1px);
+      background-size: 28px 28px;
+      background-position: 0 0, 14px 14px;
+    }
+
+    /* Stamp */
+    .stamp {
+      transform: rotate(-10deg);
+      letter-spacing: 0.12em;
+    }
+
+    /* Watermark */
+    .wm {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.06;
+      font-weight: 800;
+      font-size: 64px;
+      text-transform: uppercase;
+      color: #0f172a;
+      transform: rotate(-18deg);
+      user-select: none;
+    }
+
+    /* Fake barcode */
+    .barcode {
+      height: 42px;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(15, 23, 42, 0.85) 0px,
+        rgba(15, 23, 42, 0.85) 2px,
+        transparent 2px,
+        transparent 5px
+      );
+      border-radius: 8px;
+      opacity: 0.85;
+    }
+
+    /* Print rules */
+    @media print {
+      body {
+        background: white !important;
+      }
+      nav, .print-hidden {
+        display: none !important;
+      }
+      .shadow-2xl, .shadow-lg, .shadow-md, .shadow-sm {
+        box-shadow: none !important;
+      }
+      .rounded-2xl, .rounded-xl, .rounded-lg {
+        border-radius: 0 !important;
+      }
+      .border-dashed {
+        border-style: solid !important;
+      }
+      .print-break-avoid {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .wm { opacity: 0.04 !important; }
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+  <nav class="bg-white/80 backdrop-blur-md border-b border-gray-200 print-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center">
+          <h1 class="text-xl md:text-2xl font-bold text-primary">Fconvenience bank</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+          <img id="userAvatar" src="/placeholder.svg" alt="User" class="w-8 h-8 rounded-full border-2 border-primary hidden" />
+          <span id="userName" class="text-gray-700 font-medium text-sm md:text-base"></span>
+          <button id="logoutButton" class="text-gray-700 hover:text-primary font-medium transition-colors text-sm md:text-base">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12">
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100 relative paper-bg">
+      <div class="wm">Fconvenience bank</div>
+
+      <!-- HEADER -->
+      <div class="bg-gradient-to-r from-primary via-blue-700 to-secondary p-6 md:p-8 print:bg-primary relative">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-white mb-1">Fconvenience bank</h1>
+            <p class="text-blue-100 text-sm">Official Wire Transfer Receipt</p>
+          </div>
+          <div class="text-right">
+            <div class="text-blue-100 text-xs mb-1">Receipt No.</div>
+            <div id="receiptNumber" class="text-white font-mono font-bold text-sm md:text-base">-</div>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-white rounded-full shadow-md">
+              <svg id="statusIcon" class="w-8 h-8 md:w-10 md:h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path id="statusIconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 id="headlineText" class="text-xl md:text-2xl font-bold text-white">Transfer Submitted</h2>
+              <p id="headlineSub" class="text-blue-100 text-sm">Your wire transfer has been submitted successfully</p>
+
+              <div class="mt-3">
+                <div id="statusBadge" class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold">
+                  <span class="w-2 h-2 rounded-full mr-2" id="statusDot"></span>
+                  <span id="statusText">Processing</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stamp -->
+          <div class="self-start sm:self-auto">
+            <div class="stamp inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-white/60 bg-white/10 text-white font-bold text-xs md:text-sm">
+              <span class="w-2 h-2 rounded-full bg-white"></span>
+              OFFICIAL RECEIPT
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BODY -->
+      <div class="p-6 md:p-8 relative">
+        <!-- Profile/Holder -->
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 md:p-6 mb-6 border border-blue-100 print-break-avoid">
+          <div class="flex items-center space-x-4">
+            <img id="profileImage" src="/placeholder.svg" alt="Profile" class="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white shadow-lg hidden" />
+            <div class="flex-1">
+              <div class="text-xs text-gray-500 mb-1">Account Holder</div>
+              <div id="accountHolder" class="text-lg md:text-xl font-bold text-gray-900 mb-1">-</div>
+              <div class="flex flex-wrap gap-3 text-xs md:text-sm text-gray-600">
+                <div class="flex items-center">
+                  <svg class="w-4 h-4 mr-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                  </svg>
+                  <span id="userAccountNumber">-</span>
+                </div>
+                <div class="flex items-center">
+                  <svg class="w-4 h-4 mr-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                  </svg>
+                  <span id="userEmail">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Amount box -->
+        <div class="mb-6 md:mb-8 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200 print-break-avoid">
+          <div class="text-center">
+            <div class="text-sm text-gray-600 mb-2">Transfer Amount</div>
+            <div id="transferAmount" class="text-4xl md:text-5xl font-bold text-green-600 mb-3">$0.00</div>
+            <div class="inline-flex flex-col sm:flex-row sm:items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm">
+              <div class="flex items-center">
+                <svg class="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <span id="transferDate" class="text-sm font-medium text-gray-700">-</span>
+              </div>
+              <span class="hidden sm:inline text-gray-300">•</span>
+              <span id="transferRefInline" class="text-xs font-mono text-gray-700">REF: -</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Invoice line -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6 print-break-avoid">
+          <div class="lg:col-span-2 bg-gray-50 rounded-xl p-4 md:p-6 border border-gray-200 relative">
+            <h3 class="text-base md:text-lg font-bold text-gray-900 mb-4 flex items-center">
+              <svg class="w-5 h-5 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              Transfer Details
+            </h3>
+
+            <div class="space-y-3">
+              <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                <span class="text-gray-600 text-sm">Status</span>
+                <span id="statusDetail" class="font-semibold text-sm">-</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                <span class="text-gray-600 text-sm">From Account</span>
+                <span id="fromAccount" class="font-semibold text-gray-900 text-sm">-</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                <span class="text-gray-600 text-sm">Recipient Name</span>
+                <span id="recipientName" class="font-semibold text-gray-900 text-sm">-</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                <span class="text-gray-600 text-sm">Account Number</span>
+                <span id="accountNumber" class="font-mono font-semibold text-gray-900 text-sm">-</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                <span class="text-gray-600 text-sm">Bank Name</span>
+                <span id="bankName" class="font-semibold text-gray-900 text-sm">-</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                <span class="text-gray-600 text-sm">Bank Country</span>
+                <span id="bankCountry" class="font-semibold text-gray-900 text-sm">-</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                <span class="text-gray-600 text-sm">Routing Number</span>
+                <span id="routingNumber" class="font-mono font-semibold text-gray-900 text-sm">-</span>
+              </div>
+              <div class="flex justify-between items-start py-2">
+                <span class="text-gray-600 text-sm">Transfer Reason</span>
+                <span id="reason" class="font-semibold text-gray-900 text-sm text-right max-w-xs">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- right column: barcode + signature -->
+          <div class="bg-white rounded-xl p-4 md:p-6 border border-gray-200 flex flex-col gap-4">
+            <div>
+              <div class="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wide">Verification Barcode</div>
+              <div class="barcode"></div>
+              <div id="barcodeText" class="mt-2 text-xs font-mono text-gray-700 break-words">-</div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-4">
+              <div class="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wide">Authorized</div>
+              <div class="h-10 border-b border-dashed border-gray-300"></div>
+              <div class="text-xs text-gray-500 mt-1">Signature / Stamp</div>
+            </div>
+
+            <div class="mt-auto">
+              <div class="text-xs text-gray-500 mb-1">Receipt Generated</div>
+              <div id="timestamp" class="text-xs font-mono text-gray-700">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security codes -->
+        <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 md:p-6 border-2 border-amber-300 print-break-avoid">
+          <h3 class="text-base md:text-lg font-bold text-gray-900 mb-4 flex items-center">
+            <svg class="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            Security Verification Codes
+          </h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+            <div class="bg-white rounded-lg p-4 shadow-md border-2 border-amber-200">
+              <div class="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wide">IMF Code</div>
+              <div id="imfCode" class="text-lg md:text-xl font-bold text-amber-700 font-mono tracking-wider">****</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 shadow-md border-2 border-amber-200">
+              <div class="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wide">COT Code</div>
+              <div id="cotCode" class="text-lg md:text-xl font-bold text-amber-700 font-mono tracking-wider">****</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 shadow-md border-2 border-amber-200">
+              <div class="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wide">TAX Code</div>
+              <div id="taxCode" class="text-lg md:text-xl font-bold text-amber-700 font-mono tracking-wider">****</div>
+            </div>
+          </div>
+
+          <div class="mt-4 bg-amber-100 border border-amber-300 rounded-lg p-3">
+            <p class="text-xs text-amber-900 flex items-start">
+              <svg class="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clip-rule="evenodd"></path>
+              </svg>
+              <span><strong>Important:</strong> Keep this receipt for your records.</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Status info box -->
+        <div id="statusInfoBox" class="mt-6 bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 print-break-avoid">
+          <div class="flex items-start">
+            <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div class="text-sm text-blue-900">
+              <p class="font-semibold mb-1">Processing Status</p>
+              <p id="statusMessage">Your transfer is being processed. Please check back later for updates.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="border-t-2 border-dashed border-gray-300 pt-4 mt-6">
+          <div class="text-center text-xs text-gray-500 space-y-1">
+            <p class="font-semibold text-gray-700">Fconvenience bank - Trusted Banking Since 1995</p>
+            <p>This is an official receipt from Fconvenience bank</p>
+            <p>For inquiries, Fconvenience support@fconvenience.com</p>
+            <p class="text-xs text-gray-400 mt-2">All transactions are secured with 256-bit encryption</p>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-6 md:mt-8 flex flex-col sm:flex-row gap-3 print-hidden">
+          <button onclick="downloadReceipt()" class="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-semibold flex items-center justify-center shadow-md">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            Download Receipt
+          </button>
+
+          <button onclick="window.print()" class="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors font-semibold flex items-center justify-center shadow-md">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z"></path>
+            </svg>
+            Print Receipt
+          </button>
+
+          <a href="transactions-history.html" class="flex-1 bg-secondary text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors font-semibold text-center shadow-md">
+            View Transactions
+          </a>
+
+          <a href="dashboard.html" class="flex-1 bg-primary text-white py-3 px-4 rounded-lg hover:bg-blue-900 transition-colors font-semibold text-center shadow-md">
+            Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE_URL = window.getApiBaseUrl("user");
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (!token || !user.id) {
+      window.location.href = "../auth/login.html";
+    }
+
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+    let userProfile = null;
+    let currencySign = "$";
+
+    function normalizeStatus(status) {
+      const s = String(status || "pending").toLowerCase();
+      // ✅ never show pending_admin to user
+      if (s === "pending_admin") return "pending";
+      return s;
+    }
+
+    async function loadUserProfile() {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/profile`);
+        userProfile = response.data.user;
+        currencySign = userProfile.currency_sign || "$";
+
+        document.getElementById("userName").textContent = userProfile.full_name || userProfile.username || "User";
+        document.getElementById("accountHolder").textContent = userProfile.full_name || userProfile.username || "User";
+        document.getElementById("userAccountNumber").textContent = userProfile.account_number || "-";
+        document.getElementById("userEmail").textContent = userProfile.email || "-";
+
+        if (userProfile.profile_image_url) {
+          const imageUrl = window.getApiAssetUrl(userProfile.profile_image_url);
+          document.getElementById("profileImage").src = imageUrl;
+          document.getElementById("profileImage").classList.remove("hidden");
+          document.getElementById("userAvatar").src = imageUrl;
+          document.getElementById("userAvatar").classList.remove("hidden");
+        }
+
+        displayTransferData();
+      } catch (error) {
+        console.error("Error loading profile:", error);
+        document.getElementById("userName").textContent = user.username || "User";
+        displayTransferData();
+      }
+    }
+
+    function updateStatusDisplay(statusRaw) {
+      const status = normalizeStatus(statusRaw);
+
+      const statusBadge = document.getElementById("statusBadge");
+      const statusDot = document.getElementById("statusDot");
+      const statusText = document.getElementById("statusText");
+      const statusDetail = document.getElementById("statusDetail");
+      const statusInfoBox = document.getElementById("statusInfoBox");
+      const statusMessage = document.getElementById("statusMessage");
+
+      const headlineText = document.getElementById("headlineText");
+      const headlineSub = document.getElementById("headlineSub");
+
+      const statusIcon = document.getElementById("statusIcon");
+      const statusIconPath = document.getElementById("statusIconPath");
+
+      // Reset classes
+      statusBadge.className = "inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold";
+      statusInfoBox.className = "mt-6 rounded-lg p-4 border-l-4";
+
+      // Reset dot color
+      statusDot.className = "w-2 h-2 rounded-full mr-2";
+
+      // Icon default
+      statusIcon.className = "w-8 h-8 md:w-10 md:h-10 text-green-500";
+      statusIconPath.setAttribute("d", "M5 13l4 4L19 7");
+
+      if (status === "completed" || status === "success") {
+        statusBadge.classList.add("bg-green-100", "text-green-800");
+        statusDot.classList.add("bg-green-500");
+        statusText.textContent = "Completed";
+        statusDetail.innerHTML = '<span class="text-green-700 font-semibold">Completed</span>';
+
+        headlineText.textContent = "Transfer Completed";
+        headlineSub.textContent = "Your wire transfer has been completed successfully.";
+
+        statusInfoBox.classList.add("bg-green-50", "border-green-500");
+        statusMessage.textContent =
+          "Your transfer has been completed successfully. The funds have been sent to the recipient.";
+
+      } else if (status === "pending" || status === "processing") {
+        statusBadge.classList.add("bg-yellow-100", "text-yellow-800");
+        statusDot.classList.add("bg-yellow-500");
+        statusText.textContent = "Pending";
+        statusDetail.innerHTML = '<span class="text-yellow-700 font-semibold">Pending</span>';
+
+        headlineText.textContent = "Transfer Submitted";
+        headlineSub.textContent = "Your wire transfer has been submitted successfully.";
+
+        statusInfoBox.classList.add("bg-yellow-50", "border-yellow-500");
+        statusMessage.textContent =
+          "Your transfer is pending and currently being processed. Please check back later for updates.";
+
+        // Icon for pending (clock)
+        statusIcon.className = "w-8 h-8 md:w-10 md:h-10 text-yellow-500";
+        statusIconPath.setAttribute("d",
+          "M12 8v5l3 3m6-4a9 9 0 11-18 0 9 9 0 0118 0z"
+        );
+
+      } else if (status === "failed" || status === "rejected") {
+        statusBadge.classList.add("bg-red-100", "text-red-800");
+        statusDot.classList.add("bg-red-500");
+        statusText.textContent = "Failed";
+        statusDetail.innerHTML = '<span class="text-red-700 font-semibold">Failed</span>';
+
+        headlineText.textContent = "Transfer Failed";
+        headlineSub.textContent = "Your transfer could not be completed.";
+
+        statusInfoBox.classList.add("bg-red-50", "border-red-500");
+        statusMessage.textContent =
+          "Your transfer could not be completed. Please contact support for assistance or try again.";
+
+        // Icon for failed (x)
+        statusIcon.className = "w-8 h-8 md:w-10 md:h-10 text-red-500";
+        statusIconPath.setAttribute("d", "M6 18L18 6M6 6l12 12");
+
+      } else {
+        statusBadge.classList.add("bg-blue-100", "text-blue-800");
+        statusDot.classList.add("bg-blue-500");
+        statusText.textContent = "Pending";
+        statusDetail.innerHTML = '<span class="text-blue-700 font-semibold">Pending</span>';
+
+        headlineText.textContent = "Transfer Submitted";
+        headlineSub.textContent = "Your transfer is being processed.";
+
+        statusInfoBox.classList.add("bg-blue-50", "border-blue-500");
+        statusMessage.textContent =
+          "Your transfer is being processed. Please check back later for updates.";
+      }
+    }
+
+    function displayTransferData() {
+      const transferData = JSON.parse(localStorage.getItem("lastTransfer") || "{}");
+
+      // prefer backend transfer_id if present, else generate
+      const receiptNo = transferData.transfer_id
+        ? `WTR${String(transferData.transfer_id).padStart(8, "0")}`
+        : `WTR${Date.now().toString().slice(-10)}`;
+
+      document.getElementById("receiptNumber").textContent = receiptNo;
+
+      // show ref inline + barcode label
+      document.getElementById("transferRefInline").textContent = `REF: ${receiptNo}`;
+      document.getElementById("barcodeText").textContent = `${receiptNo} • ${new Date().toISOString()}`;
+
+      const amount = parseFloat(transferData.amount || 0);
+      document.getElementById("transferAmount").textContent = `${currencySign}${amount.toFixed(2)}`;
+
+      const transferDate = transferData.timestamp ? new Date(transferData.timestamp) : new Date();
+      document.getElementById("transferDate").textContent = transferDate.toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      document.getElementById("timestamp").textContent = new Date().toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+
+      updateStatusDisplay(transferData.status);
+
+      // Details
+      document.getElementById("fromAccount").textContent =
+        transferData.from_account === "current" ? "Current Account" : "Savings Account";
+
+      document.getElementById("recipientName").textContent = transferData.account_name || "-";
+      document.getElementById("accountNumber").textContent = transferData.account_number || "-";
+      document.getElementById("bankName").textContent = transferData.bank_name || "-";
+      document.getElementById("bankCountry").textContent = transferData.bank_country || "-";
+      document.getElementById("routingNumber").textContent = transferData.routine_number || "-";
+      document.getElementById("reason").textContent = transferData.reason || "-";
+
+      // Codes
+      document.getElementById("imfCode").textContent = transferData.imf_code || "****";
+      document.getElementById("cotCode").textContent = transferData.cot_code || "****";
+      document.getElementById("taxCode").textContent = transferData.tax_code || "****";
+
+      // optional: clear after show
+      localStorage.removeItem("lastTransfer");
+    }
+
+    function downloadReceipt() {
+      window.print();
+    }
+
+    loadUserProfile();
+
+    document.getElementById("logoutButton").addEventListener("click", () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "../auth/login.html";
+    });
+  </script>
+</body>
+</html>

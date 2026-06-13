@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+    <style>
+        /* Added dark mode styles */
+        .dark {
+            color-scheme: dark;
+        }
+        .dark body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        .dark .bg-white {
+            background-color: #1e293b;
+        }
+        .dark .bg-gray-50 {
+            background-color: #0f172a;
+        }
+        .dark .bg-gray-100 {
+            background-color: #334155;
+        }
+        .dark .text-gray-900 {
+            color: #f1f5f9;
+        }
+        .dark .text-gray-700 {
+            color: #cbd5e1;
+        }
+        .dark .text-gray-500 {
+            color: #94a3b8;
+        }
+        .dark .border-gray-200 {
+            border-color: #334155;
+        }
+        .dark .border-gray-300 {
+            border-color: #475569;
+        }
+        .dark input, .dark select, .dark textarea {
+            background-color: #334155;
+            color: #f1f5f9;
+            border-color: #475569;
+        }
+        .dark .divide-gray-200 > * {
+            border-color: #334155;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        /* Mobile menu */
+        #mobileMenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        #mobileMenu.active {
+            max-height: 500px;
+        }
+
+        /* Added toast notification styles */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 300px;
+            max-width: 500px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+            transform: translateX(0);
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        }
+        
+        .toast.hiding {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .toast-success {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .toast-error {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .toast-info {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .toast-warning {
+            background-color: #f59e0b;
+            color: white;
+        }
+        
+        /* Added loading spinner styles */
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        /* Added shimmer skeleton loader styles */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        
+        .dark .skeleton {
+            background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+            background-size: 200% 100%;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .skeleton-text {
+            height: 1rem;
+            border-radius: 0.25rem;
+        }
+        
+        .skeleton-circle {
+            border-radius: 50%;
+        }
+        
+        .skeleton-input {
+            height: 2.5rem;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+  
+    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <h1 class="text-xl sm:text-2xl font-bold text-blue-600">SecureBank Admin</h1>
+                    <div class="hidden md:flex space-x-1">
+                        <a href="admin-dashboard.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Dashboard</a>
+                        <a href="user-management.html" class="px-4 py-2 text-white bg-blue-600 rounded-lg font-medium">Users</a>
+                        <a href="transfer-management.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Transfers</a>
+                        <a href="atm-management.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">ATM</a>
+                        <a href="simulate-transactions.html" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Simulate</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <button id="themeToggle" class="p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                        <svg id="sunIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        <svg id="moonIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-medium" id="adminName">Admin User</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
+                    </div>
+                    <button id="logoutBtn" class="px-3 sm:px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors text-sm">
+                        Logout
+                    </button>
+                    <button id="mobileMenuBtn" class="md:hidden p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobileMenu" class="md:hidden border-t border-gray-200 dark:border-gray-700">
+            <div class="px-4 py-2 space-y-1">
+                <a href="admin-dashboard.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Dashboard</a>
+                <a href="user-management.html" class="block px-4 py-2 text-white bg-blue-600 rounded-lg">Users</a>
+                <a href="transfer-management.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Transfers</a>
+                <a href="atm-management.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">ATM</a>
+                <a href="simulate-transactions.html" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Simulate</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+       
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Security Codes Management</h2>
+            <!-- Added skeleton loaders for security codes -->
+            <div id="securityCodesLoader" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">IMF Code</label>
+                    <div class="skeleton skeleton-input w-full"></div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">COT Code</label>
+                    <div class="skeleton skeleton-input w-full"></div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">TAX Code</label>
+                    <div class="skeleton skeleton-input w-full"></div>
+                </div>
+            </div>
+            <div id="securityCodesForm" class="hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">IMF Code</label>
+                        <input type="text" id="imfCode" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">COT Code</label>
+                        <input type="text" id="cotCode" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">TAX Code</label>
+                        <input type="text" id="taxCode" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <button id="updateCodesBtn" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Update Security Codes
+                </button>
+            </div>
+        </div>
+
+        
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+                <h2 class="text-xl font-bold">User Management</h2>
+                <button id="createUserBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                    + Create User
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <input type="text" id="searchInput" placeholder="Search users..." class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                <select id="statusFilter" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="hold">Hold</option>
+                </select>
+                <select id="sortBy" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="id">Sort by ID</option>
+                    <option value="full_name">Sort by Name</option>
+                    <option value="email">Sort by Email</option>
+                    <option value="current_balance">Sort by Balance</option>
+                </select>
+                <select id="sortDir" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                </select>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">User</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Account</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Balance</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable" class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <!-- Added skeleton loaders for user table -->
+                        <tr>
+                            <td colspan="6" class="px-6 py-4">
+                                <div class="space-y-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="skeleton skeleton-circle w-10 h-10"></div>
+                                        <div class="flex-1 space-y-2">
+                                            <div class="skeleton skeleton-text w-32"></div>
+                                            <div class="skeleton skeleton-text w-24"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <div class="skeleton skeleton-circle w-10 h-10"></div>
+                                        <div class="flex-1 space-y-2">
+                                            <div class="skeleton skeleton-text w-32"></div>
+                                            <div class="skeleton skeleton-text w-24"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <div class="skeleton skeleton-circle w-10 h-10"></div>
+                                        <div class="flex-1 space-y-2">
+                                            <div class="skeleton skeleton-text w-32"></div>
+                                            <div class="skeleton skeleton-text w-24"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="pagination" class="mt-6 flex items-center justify-between">
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                    Showing <span id="showingFrom">0</span> to <span id="showingTo">0</span> of <span id="totalUsers">0</span> users
+                </div>
+                <div class="flex space-x-2" id="paginationButtons">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="createUserModal" class="modal">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full mx-4">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-xl font-bold">Create New User</h3>
+            </div>
+            <div class="p-6 max-h-[70vh] overflow-y-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Full Name *</label>
+                        <input type="text" id="createFullName" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Username *</label>
+                        <input type="text" id="createUsername" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email *</label>
+                        <input type="email" id="createEmail" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Password *</label>
+                        <input type="password" id="createPassword" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Currency Sign</label>
+                        <input type="text" id="createCurrency" value="$" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="createIsAdmin" class="w-4 h-4 text-blue-600 rounded">
+                            <span class="text-sm">Is Admin</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="createEmailVerified" checked class="w-4 h-4 text-blue-600 rounded">
+                            <span class="text-sm">Email Verified</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="createSendWelcome" checked class="w-4 h-4 text-blue-600 rounded">
+                            <span class="text-sm">Send Welcome Email</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+                <button id="cancelCreateBtn" class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Cancel</button>
+                <button id="confirmCreateBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Create User</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editUserModal" class="modal">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-3xl w-full mx-4">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-xl font-bold">Edit User</h3>
+            </div>
+            <div class="p-6 max-h-[70vh] overflow-y-auto">
+                <!-- Added profile image upload section -->
+                <div class="mb-6 flex flex-col items-center">
+                    <div class="relative">
+                        <img id="editUserImage" src="icons/placeholder.png" alt="User" class="w-24 h-24 rounded-full object-cover border-4 border-gray-200 dark:border-gray-700">
+                        <label for="editImageInput" class="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </label>
+                        <input type="file" id="editImageInput" accept="image/*" class="hidden">
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Click camera icon to upload new image</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Full Name</label>
+                        <input type="text" id="editFullName" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Username</label>
+                        <input type="text" id="editUsername" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input type="email" id="editEmail" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Currency Sign</label>
+                        <input type="text" id="editCurrency" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Account Status</label>
+                        <select id="editStatus" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="active">Active</option>
+                            <option value="hold">Hold</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="editEmailVerified" class="w-4 h-4 text-blue-600 rounded">
+                            <span class="text-sm">Email Verified</span>
+                        </label>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Current Balance</label>
+                        <input type="number" step="0.01" id="editCurrentBalance" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Savings Balance</label>
+                        <input type="number" step="0.01" id="editSavingsBalance" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Loan Balance</label>
+                        <input type="number" step="0.01" id="editLoanBalance" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Profile Image URL</label>
+                        <input type="text" id="editProfileImage" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Current Account Number</label>
+                        <input type="text" id="editCAccount" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Savings Account Number</label>
+                        <input type="text" id="editSAccount" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+                <button id="cancelEditBtn" class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Cancel</button>
+                <button id="confirmEditBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+   
+    <div id="viewUserModal" class="modal">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full mx-4">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-xl font-bold">User Details</h3>
+            </div>
+            <div class="p-6" id="userDetailsContent">
+                 User details will be populated here 
+            </div>
+            <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+                <button id="closeViewBtn" class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.getApiBaseUrl("admin");
+        let currentPage = 1;
+        let currentUserId = null;
+        
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+
+        function setTheme(theme) {
+            if (theme === 'dark') {
+                html.classList.add('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                html.classList.remove('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+            localStorage.setItem('theme', theme);
+        }
+
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        setTheme(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            document.getElementById('mobileMenu').classList.toggle('active');
+        });
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../auth/login.html';
+                return false;
+            }
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            return true;
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '../auth/login.html';
+        });
+
+        async function loadAdminProfile() {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/profile`);
+                document.getElementById('adminName').textContent = response.data.full_name || 'Admin User';
+            } catch (error) {
+                console.error('Failed to load admin profile:', error);
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            const icon = {
+                success: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>',
+                error: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
+                info: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                warning: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>'
+            };
+            
+            toast.innerHTML = `
+                ${icon[type]}
+                <span class="flex-1">${message}</span>
+                <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-75">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+        
+        function setButtonLoading(button, loading) {
+            if (loading) {
+                button.classList.add('btn-loading');
+                button.disabled = true;
+            } else {
+                button.classList.remove('btn-loading');
+                button.disabled = false;
+            }
+        }
+        
+        function formatNumber(num) {
+            if (num === null || num === undefined || num === '') return '0.00';
+            const number = parseFloat(num);
+            if (isNaN(number)) return '0.00';
+            return number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        async function loadSecurityCodes() {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/security-codes`);
+                const codes = response.data.codes;
+                
+                document.getElementById('imfCode').value = codes.imf_code || '';
+                document.getElementById('cotCode').value = codes.cot_code || '';
+                document.getElementById('taxCode').value = codes.tax_code || '';
+                
+                document.getElementById('securityCodesLoader').classList.add('hidden');
+                document.getElementById('securityCodesForm').classList.remove('hidden');
+            } catch (error) {
+                console.error('Failed to load security codes:', error);
+                showToast('Failed to load security codes', 'error');
+                document.getElementById('securityCodesLoader').classList.add('hidden');
+                document.getElementById('securityCodesForm').classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('updateCodesBtn').addEventListener('click', async () => {
+            const imf = document.getElementById('imfCode').value.trim();
+            const cot = document.getElementById('cotCode').value.trim();
+            const tax = document.getElementById('taxCode').value.trim();
+
+            if (!imf || !cot || !tax) {
+                showToast('All security codes are required', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('updateCodesBtn');
+            setButtonLoading(btn, true);
+
+            try {
+                await axios.put(`${API_BASE_URL}/security-codes`, {
+                    imf_code: imf,
+                    cot_code: cot,
+                    tax_code: tax
+                });
+                showToast('Security codes updated successfully', 'success');
+            } catch (error) {
+                showToast('Failed to update security codes: ' + (error.response?.data?.error || error.message), 'error');
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        });
+
+        async function loadUsers() {
+            const search = document.getElementById('searchInput').value.trim();
+            const status = document.getElementById('statusFilter').value;
+            const sort = document.getElementById('sortBy').value;
+            const dir = document.getElementById('sortDir').value;
+
+            try {
+                const params = {
+                    page: currentPage,
+                    pageSize: 20,
+                    sort,
+                    dir
+                };
+                if (search) params.q = search;
+                if (status) params.status = status;
+
+                const response = await axios.get(`${API_BASE_URL}/users`, { params });
+                const { users, total, page, pageSize, pages } = response.data;
+
+                renderUsers(users);
+                renderPagination(page, pages, total, pageSize);
+            } catch (error) {
+                console.error('Failed to load users:', error);
+                document.getElementById('usersTable').innerHTML = `
+                    <tr><td colspan="6" class="px-6 py-8 text-center text-red-500">Failed to load users</td></tr>
+                `;
+                showToast('Failed to load users', 'error');
+            }
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersTable');
+            if (!users || users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">No users found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => {
+                const imageUrl = user.profile_image_url
+                    ? window.getApiAssetUrl(user.profile_image_url)
+                    : 'icons/placeholder.png';
+                
+                return `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center space-x-3">
+                            <img src="${imageUrl}" alt="${user.full_name}" class="w-10 h-10 rounded-full object-cover">
+                            <div>
+                                <div class="font-medium">${user.full_name}</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">@${user.username}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-sm">${user.email}</td>
+                    <td class="px-6 py-4 text-sm font-mono">${user.account_number}</td>
+                    <td class="px-6 py-4 text-sm">${user.currency_sign}${formatNumber(user.current_balance)}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${user.acct_status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}">
+                            ${user.acct_status || 'active'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="viewUser(${user.id})" class="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700">View</button>
+                            <button onclick="editUser(${user.id})" class="px-3 py-1 text-xs bg-yellow-600 text-white rounded hover:bg-yellow-700">Edit</button>
+                            <button onclick="impersonateUser(${user.id})" class="px-3 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700">Impersonate</button>
+                            <button onclick="toggleOTP(${user.id})" class="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700">Toggle OTP</button>
+                            <button onclick="resetUserPin(${user.id})" class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700">Reset PIN</button>
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function renderPagination(page, pages, total, pageSize) {
+            const from = (page - 1) * pageSize + 1;
+            const to = Math.min(page * pageSize, total);
+            
+            document.getElementById('showingFrom').textContent = from;
+            document.getElementById('showingTo').textContent = to;
+            document.getElementById('totalUsers').textContent = total;
+
+            const buttons = document.getElementById('paginationButtons');
+            buttons.innerHTML = '';
+
+            if (page > 1) {
+                buttons.innerHTML += `<button onclick="changePage(${page - 1})" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Previous</button>`;
+            }
+
+            for (let i = Math.max(1, page - 2); i <= Math.min(pages, page + 2); i++) {
+                buttons.innerHTML += `<button onclick="changePage(${i})" class="px-4 py-2 border ${i === page ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'} rounded-lg">${i}</button>`;
+            }
+
+            if (page < pages) {
+                buttons.innerHTML += `<button onclick="changePage(${page + 1})" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Next</button>`;
+            }
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            loadUsers();
+        }
+
+        document.getElementById('createUserBtn').addEventListener('click', () => {
+            document.getElementById('createUserModal').classList.add('active');
+        });
+
+        document.getElementById('cancelCreateBtn').addEventListener('click', () => {
+            document.getElementById('createUserModal').classList.remove('active');
+        });
+
+        document.getElementById('confirmCreateBtn').addEventListener('click', async () => {
+            const data = {
+                full_name: document.getElementById('createFullName').value.trim(),
+                username: document.getElementById('createUsername').value.trim(),
+                email: document.getElementById('createEmail').value.trim(),
+                password: document.getElementById('createPassword').value,
+                currency_sign: document.getElementById('createCurrency').value.trim() || '$',
+                is_admin: document.getElementById('createIsAdmin').checked ? 1 : 0,
+                email_verified: document.getElementById('createEmailVerified').checked ? 1 : 0,
+                send_welcome: document.getElementById('createSendWelcome').checked
+            };
+
+            if (!data.full_name || !data.username || !data.email || !data.password) {
+                showToast('Please fill in all required fields', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('confirmCreateBtn');
+            setButtonLoading(btn, true);
+
+            try {
+                await axios.post(`${API_BASE_URL}/create/users`, data);
+                showToast('User created successfully', 'success');
+                document.getElementById('createUserModal').classList.remove('active');
+                loadUsers();
+            } catch (error) {
+                showToast('Failed to create user: ' + (error.response?.data?.error || error.message), 'error');
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        });
+
+        async function viewUser(userId) {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/users/${userId}`);
+                const user = response.data.user;
+                
+                const imageUrl = user.profile_image_url
+                    ? window.getApiAssetUrl(user.profile_image_url)
+                    : 'icons/placeholder.png';
+                
+                document.getElementById('userDetailsContent').innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-4">
+                            <img src="${imageUrl}" alt="${user.full_name}" class="w-20 h-20 rounded-full object-cover">
+                            <div>
+                                <h4 class="text-xl font-bold">${user.full_name}</h4>
+                                <p class="text-gray-500 dark:text-gray-400">@${user.username}</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><strong>Email:</strong> ${user.email}</div>
+                            <div><strong>Status:</strong> <span class="px-2 py-1 text-xs rounded-full ${user.acct_status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${user.acct_status}</span></div>
+                            <div><strong>Account Number:</strong> ${user.account_number}</div>
+                            <div><strong>Currency:</strong> ${user.currency_sign}</div>
+                            <div><strong>Current Account:</strong> ${user.c_account_number || 'N/A'}</div>
+                            <div><strong>Savings Account:</strong> ${user.s_account_number || 'N/A'}</div>
+                            <div><strong>Current Balance:</strong> ${user.currency_sign}${formatNumber(user.current_balance)}</div>
+                            <div><strong>Savings Balance:</strong> ${user.currency_sign}${formatNumber(user.savings_balance)}</div>
+                            <div><strong>Loan Balance:</strong> ${user.currency_sign}${formatNumber(user.loan_balance)}</div>
+                            <div><strong>Email Verified:</strong> ${user.email_verified ? 'Yes' : 'No'}</div>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('viewUserModal').classList.add('active');
+            } catch (error) {
+                showToast('Failed to load user details: ' + (error.response?.data?.error || error.message), 'error');
+            }
+        }
+
+        document.getElementById('closeViewBtn').addEventListener('click', () => {
+            document.getElementById('viewUserModal').classList.remove('active');
+        });
+
+        async function editUser(userId) {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/users/${userId}`);
+                const user = response.data.user;
+                
+                currentUserId = userId;
+                document.getElementById('editFullName').value = user.full_name || '';
+                document.getElementById('editUsername').value = user.username || '';
+                document.getElementById('editEmail').value = user.email || '';
+                document.getElementById('editCurrency').value = user.currency_sign || '$';
+                document.getElementById('editStatus').value = user.acct_status || 'active';
+                document.getElementById('editEmailVerified').checked = !!user.email_verified;
+                document.getElementById('editCurrentBalance').value = user.current_balance || 0;
+                document.getElementById('editSavingsBalance').value = user.savings_balance || 0;
+                document.getElementById('editLoanBalance').value = user.loan_balance || 0;
+                document.getElementById('editProfileImage').value = user.profile_image_url || '';
+                document.getElementById('editCAccount').value = user.c_account_number || '';
+                document.getElementById('editSAccount').value = user.s_account_number || '';
+                
+                const imageUrl = user.profile_image_url
+                    ? window.getApiAssetUrl(user.profile_image_url)
+                    : 'icons/placeholder.png';
+                document.getElementById('editUserImage').src = imageUrl;
+                
+                document.getElementById('editUserModal').classList.add('active');
+            } catch (error) {
+                showToast('Failed to load user: ' + (error.response?.data?.error || error.message), 'error');
+            }
+        }
+
+        document.getElementById('cancelEditBtn').addEventListener('click', () => {
+            document.getElementById('editUserModal').classList.remove('active');
+        });
+
+        document.getElementById('editImageInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!currentUserId) {
+                showToast('No user selected', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                showToast('Uploading image...', 'info');
+                const response = await axios.post(
+                    `${API_BASE_URL}/users/${currentUserId}/upload-image`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }
+                );
+
+                const imageUrl = response.data.image_url
+                    ? window.getApiAssetUrl(response.data.image_url)
+                    : 'icons/placeholder.png';
+                
+                document.getElementById('editUserImage').src = imageUrl;
+                document.getElementById('editProfileImage').value = response.data.image_url;
+                
+                showToast('Image uploaded successfully', 'success');
+            } catch (error) {
+                showToast('Failed to upload image: ' + (error.response?.data?.error || error.message), 'error');
+            }
+        });
+
+        document.getElementById('confirmEditBtn').addEventListener('click', async () => {
+            const data = {
+                full_name: document.getElementById('editFullName').value.trim(),
+                username: document.getElementById('editUsername').value.trim(),
+                email: document.getElementById('editEmail').value.trim(),
+                currency_sign: document.getElementById('editCurrency').value.trim(),
+                acct_status: document.getElementById('editStatus').value,
+                email_verified: document.getElementById('editEmailVerified').checked,
+                current_balance: parseFloat(document.getElementById('editCurrentBalance').value),
+                savings_balance: parseFloat(document.getElementById('editSavingsBalance').value),
+                loan_balance: parseFloat(document.getElementById('editLoanBalance').value),
+                profile_image_url: document.getElementById('editProfileImage').value.trim(),
+                c_account_number: document.getElementById('editCAccount').value.trim(),
+                s_account_number: document.getElementById('editSAccount').value.trim()
+            };
+
+            const btn = document.getElementById('confirmEditBtn');
+            setButtonLoading(btn, true);
+
+            try {
+                await axios.patch(`${API_BASE_URL}/users/${currentUserId}`, data);
+                showToast('User updated successfully', 'success');
+                document.getElementById('editUserModal').classList.remove('active');
+                loadUsers();
+            } catch (error) {
+                showToast('Failed to update user: ' + (error.response?.data?.error || error.message), 'error');
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        });
+
+        async function impersonateUser(userId) {
+            if (!confirm('Are you sure you want to impersonate this user? You will be redirected to their dashboard.')) return;
+
+            try {
+                showToast('Impersonating user...', 'info');
+                const response = await axios.post(`${API_BASE_URL}/users/${userId}/impersonate`, {
+                    reason: 'Admin support'
+                });
+                
+                // Store the user's token and redirect to user dashboard
+                localStorage.setItem('token', response.data.token);
+                showToast('Impersonation successful! Redirecting to user dashboard...', 'success');
+                
+                setTimeout(() => {
+                    window.location.href = '../pages/dashboard.html';
+                }, 1500);
+            } catch (error) {
+                showToast('Failed to impersonate user: ' + (error.response?.data?.error || error.message), 'error');
+            }
+        }
+
+        async function toggleOTP(userId) {
+            const enabled = confirm('Enable login OTP for this user?\n\nClick OK to enable, Cancel to disable.');
+
+            try {
+                await axios.put(`${API_BASE_URL}/user/login-otp-toggle`, {
+                    userId,
+                    enabled
+                });
+                showToast(`Login OTP ${enabled ? 'enabled' : 'disabled'} successfully`, 'success');
+            } catch (error) {
+                showToast('Failed to toggle OTP: ' + (error.response?.data?.error || error.message), 'error');
+            }
+        }
+        
+        async function resetUserPin(userId) {
+            if (!confirm('Are you sure you want to reset this user\'s transaction PIN to 000000?\n\nThe user will need to change it immediately.')) {
+                return;
+            }
+
+            try {
+                showToast('Resetting PIN...', 'info');
+                const response = await axios.post(`${API_BASE_URL}/users/${userId}/reset-pin`);
+                showToast(response.data.message || 'PIN reset successfully to 000000', 'success');
+            } catch (error) {
+                showToast('Failed to reset PIN: ' + (error.response?.data?.error || error.message), 'error');
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('input', () => {
+            currentPage = 1;
+            loadUsers();
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', () => {
+            currentPage = 1;
+            loadUsers();
+        });
+
+        document.getElementById('sortBy').addEventListener('change', loadUsers);
+        document.getElementById('sortDir').addEventListener('change', loadUsers);
+
+        // Initialize
+        if (checkAuth()) {
+            loadAdminProfile();
+            loadSecurityCodes(); // Load security codes on page load
+            loadUsers();
+        }
+    </script>
+</body>
+</html>
