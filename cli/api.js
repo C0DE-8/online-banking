@@ -1,5 +1,5 @@
 (function (window) {
-  const DEFAULT_API_ORIGIN = "https://api.fconvenience.com";
+  const DEFAULT_API_ORIGIN = "https://api.bencbonki.veliport24.com";
   const configuredOrigin = window.APP_API_URL || window.APP_API_BASE_URL || DEFAULT_API_ORIGIN;
   const API_ORIGIN = String(configuredOrigin).replace(/\/+$/, "");
   const API_ROOT = `${API_ORIGIN}/api`;
