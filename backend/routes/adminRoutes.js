@@ -547,6 +547,7 @@ router.get('/users', authenticateToken, checkAdmin, (req, res) => {
         u.loan_balance,
         u.acct_status,
         u.email_verified,
+        u.is_admin,
         u.currency_sign,
         IFNULL(i.image_url, '') AS profile_image_url,
         a.c_account_number,
@@ -698,6 +699,107 @@ router.patch('/users/:id', authenticateToken, checkAdmin, (req, res) => {
       });
     });
   });
+});
+
+// Delete a user and their related records (admin only)
+router.delete('/users/:id', authenticateToken, checkAdmin, async (req, res) => {
+  const userId = Number(req.params.id) || 0;
+  if (!userId) return res.status(400).json({ error: 'Invalid user id' });
+  if (userId === Number(req.user.id)) {
+    return res.status(400).json({ error: 'You cannot delete your own admin account' });
+  }
+
+  const forceAdminDelete = req.body?.confirm_admin_delete === true;
+
+  try {
+    const [[target]] = await db.promise().query(
+      'SELECT id, username, full_name, email, is_admin FROM users WHERE id = ? LIMIT 1',
+      [userId]
+    );
+
+    if (!target) return res.status(404).json({ error: 'User not found' });
+    if (target.is_admin && !forceAdminDelete) {
+      return res.status(400).json({
+        error: 'Refusing to delete an admin account without explicit confirmation'
+      });
+    }
+
+    const conn = db.promise();
+
+    const runOptional = async (sql, params = []) => {
+      try {
+        await conn.query(sql, params);
+      } catch (error) {
+        if (error.code === 'ER_NO_SUCH_TABLE' || error.code === 'ER_BAD_FIELD_ERROR') return;
+        throw error;
+      }
+    };
+
+    try {
+      await conn.beginTransaction();
+
+      await runOptional(
+        'DELETE FROM support_messages WHERE ticket_id IN (SELECT id FROM support_tickets WHERE user_id = ?)',
+        [userId]
+      );
+      await runOptional(
+        'DELETE FROM transfer_otps WHERE user_id = ? OR transfer_id IN (SELECT id FROM transfers WHERE user_id = ?)',
+        [userId, userId]
+      );
+
+      const relatedDeletes = [
+        ['DELETE FROM user_images WHERE user_id = ?', [userId]],
+        ['DELETE FROM accounts WHERE user_id = ?', [userId]],
+        ['DELETE FROM activities WHERE user_id = ?', [userId]],
+        ['DELETE FROM otps WHERE user_id = ?', [userId]],
+        ['DELETE FROM login_otps WHERE user_id = ?', [userId]],
+        ['DELETE FROM password_resets WHERE user_id = ?', [userId]],
+        ['DELETE FROM self_transfers WHERE user_id = ?', [userId]],
+        ['DELETE FROM atm_cards WHERE user_id = ?', [userId]],
+        ['DELETE FROM deposits WHERE user_id = ?', [userId]],
+        ['DELETE FROM transfers WHERE user_id = ?', [userId]],
+        ['DELETE FROM support_tickets WHERE user_id = ?', [userId]]
+      ];
+
+      for (const [sql, params] of relatedDeletes) {
+        await runOptional(sql, params);
+      }
+
+      const [result] = await conn.query('DELETE FROM users WHERE id = ? LIMIT 1', [userId]);
+      if (result.affectedRows === 0) {
+        await conn.rollback();
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      await conn.commit();
+
+      try {
+        await logActivity(
+          req.user.id,
+          'admin_delete_user',
+          `Deleted user #${target.id} (${target.username || target.email})`
+        );
+      } catch (_) {
+        // non-blocking audit failure
+      }
+
+      res.json({
+        message: 'User deleted successfully',
+        deleted_user: {
+          id: target.id,
+          username: target.username,
+          full_name: target.full_name,
+          email: target.email
+        }
+      });
+    } catch (error) {
+      await conn.rollback();
+      throw error;
+    }
+  } catch (error) {
+    console.error('❌ Admin delete user error:', error);
+    res.status(500).json({ error: 'Failed to delete user', details: error.message });
+  }
 });
 // ─────────────────────────────────────────────
 // Get a specific user by ID (admin view)

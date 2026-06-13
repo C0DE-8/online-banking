@@ -527,6 +527,7 @@
         const API_BASE_URL = window.getApiBaseUrl("admin");
         let currentPage = 1;
         let currentUserId = null;
+        let usersById = {};
         
         const themeToggle = document.getElementById('themeToggle');
         const html = document.documentElement;
@@ -706,12 +707,14 @@
 
         function renderUsers(users) {
             const tbody = document.getElementById('usersTable');
+            usersById = {};
             if (!users || users.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">No users found</td></tr>';
                 return;
             }
 
             tbody.innerHTML = users.map(user => {
+                usersById[user.id] = user;
                 const imageUrl = user.profile_image_url
                     ? window.getApiAssetUrl(user.profile_image_url)
                     : 'icons/placeholder.png';
@@ -742,6 +745,7 @@
                             <button onclick="impersonateUser(${user.id})" class="px-3 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700">Impersonate</button>
                             <button onclick="toggleOTP(${user.id})" class="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700">Toggle OTP</button>
                             <button onclick="resetUserPin(${user.id})" class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700">Reset PIN</button>
+                            <button onclick="deleteUser(${user.id})" class="px-3 py-1 text-xs bg-red-800 text-white rounded hover:bg-red-900">Delete</button>
                         </div>
                     </td>
                 </tr>
@@ -1008,6 +1012,35 @@
                 showToast(response.data.message || 'PIN reset successfully to 000000', 'success');
             } catch (error) {
                 showToast('Failed to reset PIN: ' + (error.response?.data?.error || error.message), 'error');
+            }
+        }
+
+        async function deleteUser(userId) {
+            const user = usersById[userId] || {};
+            const username = user.username || '';
+            const isAdmin = !!user.is_admin;
+            const label = username ? `${username} (#${userId})` : `user #${userId}`;
+            const warning = isAdmin
+                ? `This account is also an admin account.\n\nType DELETE ADMIN to permanently delete ${label}.`
+                : `Type DELETE to permanently delete ${label}.`;
+            const expected = isAdmin ? 'DELETE ADMIN' : 'DELETE';
+            const typed = prompt(`${warning}\n\nThis removes the user and related records. This cannot be undone.`);
+
+            if (typed !== expected) {
+                if (typed !== null) showToast('Delete cancelled: confirmation text did not match', 'warning');
+                return;
+            }
+
+            try {
+                showToast('Deleting user...', 'info');
+                const response = await axios.delete(`${API_BASE_URL}/users/${userId}`, {
+                    data: { confirm_admin_delete: !!isAdmin }
+                });
+
+                showToast(response.data.message || 'User deleted successfully', 'success');
+                loadUsers();
+            } catch (error) {
+                showToast('Failed to delete user: ' + (error.response?.data?.error || error.message), 'error');
             }
         }
 
