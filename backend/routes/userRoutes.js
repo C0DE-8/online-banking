@@ -826,31 +826,46 @@ router.post("/transfer/local/verify", authenticateToken, (req, res) => {
 
       const newBalance = (balance - total).toFixed(2);
 
-      // 1) deduct
-      db.query(`UPDATE users SET ${balanceColumn} = ? WHERE id = ?`, [newBalance, userId], (e1) => {
-        if (e1) return res.status(500).json({ error: "Failed to deduct balance", details: String(e1) });
+      db.query(
+        `SELECT value FROM settings WHERE key_name = 'local_transfer_admin_confirm_enabled' LIMIT 1`,
+        (sErr, sRows) => {
+          if (sErr) return res.status(500).json({ error: "Failed to fetch admin-confirm setting", details: String(sErr) });
 
-        // 2) update transfer otp_status
-        db.query(
-          `UPDATE transfers
-           SET otp_status = 'verified', otp_verified_at = NOW()
-           WHERE id = ? AND user_id = ?`,
-          [transfer_id, userId],
-          (e2) => {
-            if (e2) return res.status(500).json({ error: "Failed to update transfer status", details: String(e2) });
+          const adminConfirmEnabled =
+            sRows?.[0]?.value === undefined || sRows?.[0]?.value === null
+              ? true
+              : String(sRows[0].value) === "1";
+          const nextStatus = adminConfirmEnabled ? "pending_admin" : "completed";
+          const confirmedAtSql = nextStatus === "completed" ? ", confirmed_at = NOW()" : "";
 
-            // 3) delete otp record
-            db.query(`DELETE FROM transfer_otps WHERE transfer_id = ?`, [transfer_id]);
+          // 1) deduct
+          db.query(`UPDATE users SET ${balanceColumn} = ? WHERE id = ?`, [newBalance, userId], (e1) => {
+            if (e1) return res.status(500).json({ error: "Failed to deduct balance", details: String(e1) });
 
-            return res.json({
-              message: `OTP verified. Transfer confirmed. Total ${currency}${total.toFixed(2)} deducted.`,
-              transfer_id,
-              status: r.status,        // stays whatever your DB expects (processing, etc.)
-              otp_status: "verified",
-            });
-          }
-        );
-      });
+            // 2) update transfer otp_status
+            db.query(
+              `UPDATE transfers
+               SET otp_status = 'verified', otp_verified_at = NOW(), status = ?${confirmedAtSql}
+               WHERE id = ? AND user_id = ?`,
+              [nextStatus, transfer_id, userId],
+              (e2) => {
+                if (e2) return res.status(500).json({ error: "Failed to update transfer status", details: String(e2) });
+
+                // 3) delete otp record
+                db.query(`DELETE FROM transfer_otps WHERE transfer_id = ?`, [transfer_id]);
+
+                return res.json({
+                  message: `OTP verified. Transfer confirmed. Total ${currency}${total.toFixed(2)} deducted.`,
+                  transfer_id,
+                  status: nextStatus,
+                  otp_status: "verified",
+                  admin_confirm_enabled: adminConfirmEnabled,
+                });
+              }
+            );
+          });
+        }
+      );
     }
   );
 });

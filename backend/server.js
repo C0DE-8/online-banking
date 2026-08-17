@@ -6,6 +6,7 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
 const cors = require('cors');
+const { ensureTransferSchema } = require('./utils/ensureTransferSchema');
 
 const app = express();
 
@@ -31,4 +32,11 @@ app.get('/', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port http://localhost:${PORT}`));
+ensureTransferSchema()
+  .then(() => {
+    app.listen(PORT, () => console.log(`🚀 Server running on port http://localhost:${PORT}`));
+  })
+  .catch((err) => {
+    console.error('❌ Failed to prepare transfer schema:', err);
+    process.exit(1);
+  });
