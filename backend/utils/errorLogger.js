@@ -81,7 +81,7 @@ function requestFailureLogger(req, res, next) {
 
   const originalSend = res.send.bind(res);
   res.send = (body) => {
-    responseBody = body;
+    if (responseBody === null) responseBody = body;
     return originalSend(body);
   };
 

@@ -2185,26 +2185,45 @@ router.post('/transfer/self', authenticateToken, (req, res) => {
   const userId = req.user.id;
   const { from_account, to_account, amount, pin } = req.body;
 
-  if (!from_account || !to_account || !amount || !pin || from_account === to_account) {
-    return res.status(400).json({ error: 'Invalid self transfer request' });
+  const fromAccount = String(from_account || '').trim().toLowerCase();
+  const toAccount = String(to_account || '').trim().toLowerCase();
+  const amountNum = parseFloat(amount);
+
+  if (!['current', 'savings'].includes(fromAccount)) {
+    return res.status(400).json({ error: 'Please select a valid account to transfer from' });
+  }
+
+  if (!['current', 'savings'].includes(toAccount)) {
+    return res.status(400).json({ error: 'Please select a valid account to transfer to' });
+  }
+
+  if (fromAccount === toAccount) {
+    return res.status(400).json({ error: 'Cannot transfer to the same account' });
+  }
+
+  if (!Number.isFinite(amountNum) || amountNum <= 0) {
+    return res.status(400).json({ error: 'Amount must be a valid number greater than 0' });
+  }
+
+  if (!/^\d{6}$/.test(String(pin || ''))) {
+    return res.status(400).json({ error: 'Transaction PIN must be 6 digits' });
   }
 
   // Step 1: Get and verify user's PIN
   db.query('SELECT transaction_pin FROM users WHERE id = ?', [userId], (err, results) => {
     if (err) return res.status(500).json({ error: 'DB error on PIN' });
-    if (!results.length || results[0].transaction_pin !== pin) {
+    if (!results.length || String(results[0].transaction_pin) !== String(pin)) {
       return res.status(403).json({ error: 'Incorrect PIN' });
     }
 
-    const fromCol = from_account === 'savings' ? 'savings_balance' : 'current_balance';
-    const toCol = to_account === 'savings' ? 'savings_balance' : 'current_balance';
+    const fromCol = fromAccount === 'savings' ? 'savings_balance' : 'current_balance';
+    const toCol = toAccount === 'savings' ? 'savings_balance' : 'current_balance';
 
     // Step 2: Check balance
     db.query(`SELECT ${fromCol}, ${toCol} FROM users WHERE id = ?`, [userId], (err2, balances) => {
       if (err2) return res.status(500).json({ error: 'DB error on balance check' });
 
       const fromBal = parseFloat(balances[0][fromCol]);
-      const amountNum = parseFloat(amount);
 
       if (fromBal < amountNum) {
         return res.status(400).json({ error: 'Insufficient balance' });
@@ -2213,21 +2232,45 @@ router.post('/transfer/self', authenticateToken, (req, res) => {
       const newFrom = (fromBal - amountNum).toFixed(2);
       const newTo = (parseFloat(balances[0][toCol]) + amountNum).toFixed(2);
 
-      // Step 3: Perform update and insert
-      db.query(`UPDATE users SET ${fromCol} = ?, ${toCol} = ? WHERE id = ?`, [newFrom, newTo, userId]);
-      db.query(
-        `INSERT INTO self_transfers (user_id, from_account, to_account, amount) VALUES (?, ?, ?, ?)`,
-        [userId, from_account, to_account, amountNum]
-      );
+      db.beginTransaction((txErr) => {
+        if (txErr) return res.status(500).json({ error: 'Failed to start self transfer' });
 
-      // Step 4: Log activity in USD
-      logActivity(
-        userId,
-        'self_transfer',
-        `Transferred $${amountNum.toFixed(2)} from ${from_account} to ${to_account}`
-      );
+        db.query(
+          `UPDATE users SET ${fromCol} = ?, ${toCol} = ? WHERE id = ?`,
+          [newFrom, newTo, userId],
+          (updateErr) => {
+            if (updateErr) {
+              return db.rollback(() => res.status(500).json({ error: 'Failed to update account balances' }));
+            }
 
-      res.json({ message: 'Self transfer completed successfully' });
+            db.query(
+              `INSERT INTO self_transfers (user_id, from_account, to_account, amount) VALUES (?, ?, ?, ?)`,
+              [userId, fromAccount, toAccount, amountNum],
+              async (insertErr) => {
+                if (insertErr) {
+                  return db.rollback(() => res.status(500).json({ error: 'Failed to record self transfer' }));
+                }
+
+                db.commit(async (commitErr) => {
+                  if (commitErr) {
+                    return db.rollback(() => res.status(500).json({ error: 'Failed to complete self transfer' }));
+                  }
+
+                  try {
+                    await logActivity(
+                      userId,
+                      'self_transfer',
+                      `Transferred $${amountNum.toFixed(2)} from ${fromAccount} to ${toAccount}`
+                    );
+                  } catch (_) {}
+
+                  res.json({ message: 'Self transfer completed successfully' });
+                });
+              }
+            );
+          }
+        );
+      });
     });
   });
 });
